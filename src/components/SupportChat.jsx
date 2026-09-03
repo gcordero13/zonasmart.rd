@@ -13,20 +13,40 @@ function findProductInList(products, text) {
   return products.find((p) => normalize(p.name).split(/\s+/).some((w) => w.length > 3 && t.includes(w)))
 }
 
-function buildCatalogReplies(products) {
-  const available = products.filter((p) => p.stock > 0)
-  const lines = available.map((p) => `${p.name} — $${Number(p.price).toFixed(2)}`)
-  return lines.length
-    ? `Estos son los equipos disponibles en existencia:\n\n${lines.join('\n')}`
-    : 'Actualmente no hay equipos en existencia. Pronto reponemos inventario.'
+function describeTotals(match, qty, wantInstall) {
+  const price = Number(match.price || 0)
+  const stock = Number(match.stock || 0)
+  if (qty < 1) qty = 1
+  if (stock <= 0) return `El ${match.name} está agotado por el momento.`
+  const limited = qty > stock
+  const useQty = Math.min(qty, stock)
+  let total = price * useQty
+  let msg = `El ${match.name} cuesta $${price.toFixed(2)} por unidad.\n`
+  let instal = 0
+  if (wantInstall && match.requires_installation) {
+    instal = Number(match.installation_price || 0)
+    total += instal
+    msg += `Incluye instalación (+$${instal.toFixed(2)}).\n`
+  } else if (wantInstall && !match.requires_installation) {
+    msg += `Nota: este equipo no tiene instalación disponible.\n`
+  }
+  msg += `Por ${useQty} unidad(es): $${(price * useQty).toFixed(2)}`
+  if (instal) msg += ` + $${instal.toFixed(2)} de instalación`
+  msg += `.\nTotal: $${total.toFixed(2)}.`
+  if (limited) {
+    msg += `\nSolo tenemos ${stock} disponible(s). Si necesitas más, te paso con un agente de soporte.`
+  } else if (useQty > 1) {
+    msg += `\n¿Te hago una cotización formal? Usa el Cotizador para descargarla o dime y te asesoro.`
+  }
+  return msg
 }
 
-function buildBotReply(rawUser, products) {
+function buildBotReply(rawUser, products, lastProductName) {
   const text = normalize(rawUser)
 
   if (/hola|buenas|saludos|hey|hi/.test(text)) {
     return (
-      'Hola! Soy el asistente de ZonaSmart 🙂\n\nPuedo ayudarte con:\n• Consultar equipos en existencia\n• Preguntar por un producto específico\n• Pasarte con un agente de soporte'
+      'Hola! Soy el asistente de ZonaSmart 🙂\n\nPuedo ayudarte con:\n• Consultar equipos en existencia\n• Calcular cuánto saldría una cantidad de equipos\n• Cotizaciones con instalación\n• Pasarte con un agente de soporte'
     )
   }
 
@@ -34,20 +54,44 @@ function buildBotReply(rawUser, products) {
     return buildCatalogReplies(products)
   }
 
-  const match = findProductInList(products, text)
+  const qtyMatch = text.match(/(\d+)/)
+  const wantInstall = /instalac|instalar|puesta/.test(text)
+  const wantQuote = /cotiz|costo|cuesta|cuanto|cuanto saldria|precio/.test(text)
+
+  let match = findProductInList(products, text)
+
+  // Si no mencionó un equipo por nombre pero habló de una cantidad,
+  // recordamos el último equipo mencionado en la conversación.
+  if (!match && qtyMatch && lastProductName) {
+    match = products.find((p) => normalize(p.name) === normalize(lastProductName)) || null
+  }
+
   if (match) {
-    const status =
-      match.stock > 0
-        ? `El ${match.name} está en existencia. Tenemos ${match.stock} disponible(s) y su precio es $${Number(match.price).toFixed(2)}.`
-        : `El ${match.name} está agotado por el momento.`
-    return status
+    const stock = Number(match.stock || 0)
+    if (qtyMatch) {
+      const qty = parseInt(qtyMatch[1], 10)
+      return describeTotals(match, qty, wantInstall)
+    }
+    return stock > 0
+      ? `El ${match.name} está en existencia. Tenemos ${stock} disponible(s) y su precio es $${Number(match.price).toFixed(2)}.`
+      : `El ${match.name} está agotado por el momento.`
   }
 
   if (/soporte|agente|humano|persona|asesor|ayuda|contacto/.test(text)) {
     return 'Con gusto te paso con un agente de soporte. Usa los botones de abajo para WhatsApp o correo y atenderemos tu consulta lo antes posible.'
   }
 
-  return 'Hola! ¿En qué puedo ayudarte?\n\n• Escribe el nombre de un equipo para saber si está en existencia.\n• Escribe "existencias" para ver todos los productos disponibles.\n• Escribe "soporte" para hablar con un agente.'
+  return wantQuote
+    ? 'Para calcular un total dime el equipo y la cantidad. Por ejemplo: "3 cámaras" o "cuánto saldrían 4 cámaras".'
+    : 'Hola! ¿En qué puedo ayudarte?\n\n• Escribe el nombre de un equipo para saber si está en existencia.\n• Escribe una cantidad y el equipo para calcular (ej. "4 cámaras").\n• Escribe "existencias" para ver todos los productos disponibles.\n• Escribe "soporte" para hablar con un agente.'
+}
+
+function buildCatalogReplies(products) {
+  const available = products.filter((p) => p.stock > 0)
+  const lines = available.map((p) => `${p.name} — $${Number(p.price).toFixed(2)}`)
+  return lines.length
+    ? `Estos son los equipos disponibles en existencia:\n\n${lines.join('\n')}`
+    : 'Actualmente no hay equipos en existencia. Pronto reponemos inventario.'
 }
 
 export default function SupportChat() {
@@ -57,6 +101,7 @@ export default function SupportChat() {
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
   const [products, setProducts] = useState([])
+  const [lastProductName, setLastProductName] = useState(null)
   const bottomRef = useRef(null)
 
   useEffect(() => {
@@ -85,7 +130,13 @@ export default function SupportChat() {
     setMessages((m) => [...m, { from: 'user', text }])
     setInput('')
     setTimeout(() => {
-      const reply = buildBotReply(text, products)
+      const found = findProductInList(products, text)
+      const reply = buildBotReply(text, products, lastProductName)
+      if (found) {
+        setLastProductName(found.name)
+      } else if (/soporte|agente|humano|persona|asesor/.test(normalize(text))) {
+        setLastProductName(null)
+      }
       setMessages((m) => [...m, { from: 'bot', text: reply }])
       setTyping(false)
     }, WAIT_MS + Math.random() * 500)
