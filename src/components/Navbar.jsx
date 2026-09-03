@@ -88,6 +88,9 @@ export default function Navbar() {
                 <NavLink to="/tienda" className={linkClass}>
                   Tienda
                 </NavLink>
+                <NavLink to="/servicios" className={linkClass}>
+                  Servicios
+                </NavLink>
                 <NavLink to="/seguimiento" className={linkClass}>
                   Seguimiento
                 </NavLink>
@@ -174,6 +177,9 @@ export default function Navbar() {
             </NavLink>
             <NavLink to="/tienda" className={mobileLink} onClick={() => setMenuOpen(false)}>
               Tienda
+            </NavLink>
+            <NavLink to="/servicios" className={mobileLink} onClick={() => setMenuOpen(false)}>
+              Servicios
             </NavLink>
             <NavLink to="/seguimiento" className={mobileLink} onClick={() => setMenuOpen(false)}>
               Seguimiento

@@ -16,6 +16,7 @@ import Register from './pages/auth/Register'
 import SellerPortal from './pages/seller/SellerPortal'
 import NotFound from './pages/store/NotFound'
 import LegalPage from './pages/store/LegalPage'
+import ServicePage from './pages/store/ServicePage'
 import Dashboard from './pages/admin/Dashboard'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminOrders from './pages/admin/AdminOrders'
@@ -35,6 +36,7 @@ function App() {
         <Route path="/carrito" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/cotizador" element={<Cotizador />} />
+        <Route path="/servicios" element={<ServicePage />} />
         <Route path="/confirmacion" element={<OrderConfirmation />} />
         <Route path="/seguimiento" element={<Tracking />} />
         <Route path="/mis-pedidos" element={<MyOrders />} />
