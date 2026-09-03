@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
@@ -8,6 +8,8 @@ import { decrementProductStock } from '../../services/products'
 import { estimateLocation } from '../../services/geo'
 import { sendOrderNotification } from '../../services/emails'
 import { useStore } from '../../context/StoreContext'
+
+const MapPicker = lazy(() => import('../../components/MapPicker'))
 
 export default function Checkout() {
   const { items, totalPrice, totalItems, clearCart } = useCart()
@@ -27,6 +29,7 @@ export default function Checkout() {
     city: '',
     zip: '',
   })
+  const [latLng, setLatLng] = useState(null)
 
   const detectLocation = async () => {
     setLocating(true)
@@ -34,6 +37,7 @@ export default function Checkout() {
     try {
       const loc = await estimateLocation()
       setLocInfo(loc)
+      setLatLng({ lat: loc.latitude, lng: loc.longitude })
       setForm((f) => ({ ...f, city: loc.city || f.city }))
     } catch (e) {
       setError(e.message)
@@ -95,6 +99,8 @@ export default function Checkout() {
         subtotal: totalPrice,
         shipping,
         total: totalPrice + shipping,
+        lat: latLng?.lat ?? null,
+        lng: latLng?.lng ?? null,
         status: 'pending',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -190,6 +196,24 @@ export default function Checkout() {
             {locInfo.province ? `, ${locInfo.province}` : ''}. Puedes editarla abajo.
           </p>
         )}
+        <div className="mb-6">
+          <p className="text-sm font-medium text-gray-700 mb-2">Selecciona tu ubicación en el mapa</p>
+          <Suspense
+            fallback={
+              <div className="rounded-xl border border-gray-200 h-64 flex items-center justify-center text-sm text-gray-400">
+                Cargando mapa...
+              </div>
+            }
+          >
+            <MapPicker
+              value={latLng}
+              onChange={(loc) => {
+                setLatLng({ lat: loc.lat, lng: loc.lng })
+                if (loc.city) setForm((f) => ({ ...f, city: loc.city }))
+              }}
+            />
+          </Suspense>
+        </div>
         <div className="grid sm:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
