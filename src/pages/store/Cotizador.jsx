@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { fetchProducts } from '../../services/products'
 import { fetchSellerByUser } from '../../services/sellers'
+import { uploadImage, getPublicUrl } from '../../services/storage'
 import {
   fetchQuotations,
   createQuotation,
@@ -34,7 +35,11 @@ export default function Cotizador() {
   const [discount, setDiscount] = useState(0)
   const [status, setStatus] = useState('pending')
   const [previewQuote, setPreviewQuote] = useState(null)
+  const [coverIndex, setCoverIndex] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [coverImages, setCoverImages] = useState([])
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef(null)
 
   const admin = user?.user_metadata?.role === 'admin' || user?.app_metadata?.role === 'admin'
 
@@ -72,7 +77,16 @@ export default function Cotizador() {
     if (!prod) return
     setForm((f) => ({
       ...f,
-      items: [...f.items, { id: prod.id, name: prod.name, price: Number(prod.price), qty: Number(qty || 1) }],
+      items: [
+        ...f.items,
+        {
+          id: prod.id,
+          name: prod.name,
+          price: Number(prod.price),
+          qty: Number(qty || 1),
+          image_url: prod.image_url || null,
+        },
+      ],
     }))
     setSelectedProduct('')
     setQty(1)
@@ -82,6 +96,25 @@ export default function Cotizador() {
     setForm((f) => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))
   }
 
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setError(null)
+    try {
+      const path = `quotations/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+      await uploadImage(file, path)
+      setCoverImages((imgs) => [...imgs, getPublicUrl(path)])
+    } catch (err) {
+      setError('No se pudo subir la imagen: ' + err.message)
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  const removeCover = (url) => setCoverImages((imgs) => imgs.filter((i) => i !== url))
+
   const handleSubmit = async () => {
     if (!form.customer_name || form.items.length === 0) {
       setError('Debes indicar el nombre del cliente y al menos un producto.')
@@ -90,6 +123,8 @@ export default function Cotizador() {
     setSaving(true)
     setError(null)
     try {
+      const productImages = form.items.map((i) => i.image_url).filter(Boolean)
+      const cover_images = [...new Set([...coverImages, ...productImages])]
       const quote = {
         seller_id: mySeller?.id || null,
         customer_name: form.customer_name,
@@ -97,6 +132,7 @@ export default function Cotizador() {
         customer_whatsapp: form.customer_whatsapp || null,
         notes: form.notes || null,
         items: form.items,
+        cover_images,
         subtotal,
         shipping: Number(shipping || 0),
         discount: Number(discount || 0),
@@ -120,13 +156,35 @@ export default function Cotizador() {
     setShipping(0)
     setDiscount(0)
     setStatus('pending')
+    setCoverImages([])
   }
 
-  const openPreview = (q) => setPreviewQuote(q)
+  const openPreview = (q) => {
+    setCoverIndex(0)
+    setPreviewQuote(q)
+  }
+
+  const handleCover = (dir) => {
+    const len = (previewQuote?.cover_images || []).filter(Boolean).length
+    if (len <= 1) return
+    setCoverIndex((i) =>
+      dir === 'next' ? (i + 1) % len : (i - 1 + len) % len
+    )
+  }
+
+  // Autoplay del carrousel en preview
+  useEffect(() => {
+    if (!previewQuote) return
+    const len = (previewQuote.cover_images || []).filter(Boolean).length
+    if (len <= 1) return
+    const t = setInterval(() => setCoverIndex((i) => (i + 1) % len), 3500)
+    return () => clearInterval(t)
+  }, [previewQuote])
 
   const printQuote = () => {
     if (!previewQuote) return
-    window.print()
+    setCoverIndex(0) // fijar primera imagen al imprimir
+    setTimeout(() => window.print(), 80)
   }
 
   if (loading) {
@@ -254,6 +312,46 @@ export default function Cotizador() {
                 ))}
               </div>
             )}
+
+            {/* Imágenes de portada */}
+            <div className="border-t border-gray-100 pt-4">
+              <p className="text-sm font-semibold text-gray-700 mb-1">Imágenes de portada</p>
+              <p className="text-xs text-gray-500 mb-3">
+                Se usan de fondo en relieve. Se agregan automáticamente las de tus productos; también puedes subir imágenes.
+              </p>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+              <div className="flex flex-wrap gap-2">
+                {coverImages.map((url) => (
+                  <div key={url} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 group">
+                    <img src={url} alt="Portada" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeCover(url)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Quitar"
+                    >
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-brand hover:text-brand transition-colors disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <span className="inline-block w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -402,7 +500,12 @@ export default function Cotizador() {
               </div>
             </div>
             <div className="px-6 py-6">
-              <QuoteDocument quote={previewQuote} sellerName={mySeller?.name} />
+              <QuoteDocument
+                quote={previewQuote}
+                sellerName={mySeller?.name}
+                coverIndex={coverIndex}
+                onCover={handleCover}
+              />
             </div>
           </div>
         </div>
@@ -415,6 +518,7 @@ export default function Cotizador() {
           #quote-print-area, #quote-print-area * { visibility: visible; }
           #quote-print-area { position: absolute; left: 0; top: 0; width: 100%; }
           #quote-print-area { box-shadow: none !important; }
+          #quote-print-area { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
       `}</style>
     </div>

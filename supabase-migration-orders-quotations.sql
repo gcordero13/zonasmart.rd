@@ -24,6 +24,7 @@ create table if not exists public.quotations (
   customer_whatsapp text,
   notes text,
   items jsonb not null default '[]'::jsonb,
+  cover_images jsonb not null default '[]'::jsonb,
   subtotal numeric not null default 0,
   shipping numeric not null default 0,
   discount numeric not null default 0,
