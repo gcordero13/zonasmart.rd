@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
-import { createOrder } from '../../services/orders'
+import { createOrder, generateTrackingCode } from '../../services/orders'
 
 export default function Checkout() {
   const { items, totalPrice, totalItems, clearCart } = useCart()
@@ -34,13 +34,18 @@ export default function Checkout() {
     try {
       const order = {
         user_id: user.id,
+        email: form.email,
+        customer_name: form.name,
+        tracking_code: generateTrackingCode(),
         items: items.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
         total: totalPrice,
         status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       }
-      await createOrder(order)
+      const created = await createOrder(order)
       clearCart()
-      navigate('/confirmacion')
+      navigate('/confirmacion', { state: { trackingCode: created.tracking_code } })
     } catch (err) {
       setError(err.message)
     } finally {

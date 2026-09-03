@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchProducts } from '../../services/products'
 import ProductCard from '../../components/ProductCard'
+import ReviewsSection from '../../components/ReviewsSection'
 
 export default function Home() {
   const [products, setProducts] = useState([])
@@ -56,6 +57,8 @@ export default function Home() {
           </p>
         )}
       </section>
+
+      <ReviewsSection />
     </div>
   )
 }

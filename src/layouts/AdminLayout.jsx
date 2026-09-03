@@ -1,9 +1,11 @@
 import { NavLink, Outlet, Link } from 'react-router-dom'
+import AdminNotifications from '../components/AdminNotifications'
 
 const navItems = [
   { to: '/admin', label: 'Resumen', end: true },
   { to: '/admin/productos', label: 'Productos' },
   { to: '/admin/pedidos', label: 'Pedidos' },
+  { to: '/admin/resenas', label: 'Reseñas' },
   { to: '/admin/clientes', label: 'Clientes' },
 ]
 
@@ -41,8 +43,13 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 p-6 overflow-auto">
-        <Outlet />
+      <main className="flex-1 flex flex-col overflow-auto">
+        <div className="flex items-center justify-end px-6 py-2 bg-white border-b border-gray-200">
+          <AdminNotifications />
+        </div>
+        <div className="p-6 flex-1">
+          <Outlet />
+        </div>
       </main>
     </div>
   )

@@ -28,12 +28,15 @@ export default function Navbar() {
             <Link to="/" className="text-xl font-bold text-white">
               Zona<span className="text-amber-400">Smart</span>
             </Link>
-            <div className="hidden md:flex items-center gap-1">
+<div className="hidden md:flex items-center gap-1">
               <NavLink to="/" className={linkClass} end>
                 Inicio
               </NavLink>
               <NavLink to="/tienda" className={linkClass}>
                 Tienda
+              </NavLink>
+              <NavLink to="/seguimiento" className={linkClass}>
+                Seguimiento
               </NavLink>
             </div>
           </div>
@@ -50,6 +53,12 @@ export default function Navbar() {
 
             {user ? (
               <div className="flex items-center gap-3">
+                <Link
+                  to="/mis-pedidos"
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-amber-400 transition-colors"
+                >
+                  Mis pedidos
+                </Link>
                 <Link
                   to="/admin"
                   className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-amber-400 transition-colors"

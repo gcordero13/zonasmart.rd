@@ -8,12 +8,15 @@ import ProductDetail from './pages/store/ProductDetail'
 import Cart from './pages/store/Cart'
 import Checkout from './pages/store/Checkout'
 import OrderConfirmation from './pages/store/OrderConfirmation'
+import Tracking from './pages/store/Tracking'
+import MyOrders from './pages/store/MyOrders'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import Dashboard from './pages/admin/Dashboard'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminOrders from './pages/admin/AdminOrders'
 import AdminCustomers from './pages/admin/AdminCustomers'
+import AdminReviews from './pages/admin/AdminReviews'
 
 function App() {
   return (
@@ -25,6 +28,8 @@ function App() {
         <Route path="/carrito" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/confirmacion" element={<OrderConfirmation />} />
+        <Route path="/seguimiento" element={<Tracking />} />
+        <Route path="/mis-pedidos" element={<MyOrders />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
       </Route>
@@ -40,6 +45,7 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="productos" element={<AdminProducts />} />
         <Route path="pedidos" element={<AdminOrders />} />
+        <Route path="resenas" element={<AdminReviews />} />
         <Route path="clientes" element={<AdminCustomers />} />
       </Route>
     </Routes>

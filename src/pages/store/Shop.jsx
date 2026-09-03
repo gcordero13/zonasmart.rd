@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchProducts } from '../../services/products'
+import { fetchProducts, subscribeToProducts } from '../../services/products'
 import ProductCard from '../../components/ProductCard'
 
 export default function Shop() {
@@ -18,6 +18,16 @@ export default function Shop() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
+
+    const subscription = subscribeToProducts(() => {
+      fetchProducts()
+        .then(setProducts)
+        .catch(() => {})
+    })
+
+    return () => {
+      subscription?.unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
