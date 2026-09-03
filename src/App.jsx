@@ -12,6 +12,7 @@ import Tracking from './pages/store/Tracking'
 import MyOrders from './pages/store/MyOrders'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import SellerPortal from './pages/seller/SellerPortal'
 import Dashboard from './pages/admin/Dashboard'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminOrders from './pages/admin/AdminOrders'
@@ -32,6 +33,7 @@ function App() {
         <Route path="/confirmacion" element={<OrderConfirmation />} />
         <Route path="/seguimiento" element={<Tracking />} />
         <Route path="/mis-pedidos" element={<MyOrders />} />
+        <Route path="/portal-vendedor" element={<SellerPortal />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
       </Route>

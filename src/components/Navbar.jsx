@@ -102,6 +102,12 @@ export default function Navbar() {
                     Mis pedidos
                   </Link>
                   <Link
+                    to="/portal-vendedor"
+                    className="hidden lg:block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                  >
+                    Portal vendedor
+                  </Link>
+                  <Link
                     to="/admin"
                     className="hidden lg:block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white transition-colors"
                   >
@@ -149,6 +155,9 @@ export default function Navbar() {
               <>
                 <NavLink to="/mis-pedidos" className={mobileLink} onClick={() => setMenuOpen(false)}>
                   Mis pedidos
+                </NavLink>
+                <NavLink to="/portal-vendedor" className={mobileLink} onClick={() => setMenuOpen(false)}>
+                  Portal vendedor
                 </NavLink>
                 <NavLink to="/admin" className={mobileLink} onClick={() => setMenuOpen(false)}>
                   Panel
