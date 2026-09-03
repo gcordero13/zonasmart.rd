@@ -25,9 +25,9 @@ export default function ProductDetail() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <nav className="text-sm text-gray-500 mb-6">
-        <Link to="/" className="hover:text-amber-600">Inicio</Link>
+        <Link to="/" className="hover:text-brand-dark">Inicio</Link>
         <span> / </span>
-        <Link to="/tienda" className="hover:text-amber-600">Tienda</Link>
+        <Link to="/tienda" className="hover:text-brand-dark">Tienda</Link>
         <span> / </span>
         <span className="text-gray-700">{product.name}</span>
       </nav>
@@ -44,7 +44,7 @@ export default function ProductDetail() {
         </div>
 
         <div>
-          <p className="text-sm text-amber-600 font-semibold uppercase mb-2">
+          <p className="text-sm text-brand font-semibold uppercase mb-2">
             {product.category}
           </p>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
@@ -66,7 +66,7 @@ export default function ProductDetail() {
           <button
             onClick={() => addItem(product)}
             disabled={product.stock === 0}
-            className="w-full md:w-auto px-8 py-4 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full md:w-auto px-8 py-4 rounded-lg bg-brand text-white font-semibold hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {product.stock === 0 ? 'Agotado' : 'Agregar al carrito'}
           </button>

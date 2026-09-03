@@ -11,7 +11,7 @@ export default function Cart() {
         <p className="text-gray-500 mb-8">Agrega productos para comenzar a comprar.</p>
         <Link
           to="/tienda"
-          className="inline-block px-8 py-4 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors"
+          className="inline-block px-8 py-4 rounded-lg bg-brand text-white font-semibold hover:bg-brand-dark transition-colors"
         >
           Ir a la tienda
         </Link>
@@ -107,7 +107,7 @@ export default function Cart() {
           </div>
           <Link
             to="/checkout"
-            className="block w-full text-center px-6 py-3 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors"
+            className="block w-full text-center px-6 py-3 rounded-lg bg-brand text-white font-semibold hover:bg-brand-dark transition-colors"
           >
             Proceder al pago
           </Link>

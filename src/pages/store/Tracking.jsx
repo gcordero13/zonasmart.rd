@@ -48,7 +48,7 @@ function LoggedOrders({ user }) {
           <p className="text-gray-600 mb-4">Aún no tienes pedidos.</p>
           <Link
             to="/tienda"
-            className="inline-block px-6 py-3 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors"
+            className="inline-block px-6 py-3 rounded-lg bg-brand text-white font-semibold hover:bg-brand-dark transition-colors"
           >
             Comprar ahora
           </Link>
@@ -66,7 +66,7 @@ function LoggedOrders({ user }) {
       <div className="text-center mt-8">
         <p className="text-sm text-gray-600">
           ¿Quieres seguir un pedido por código?{' '}
-          <Link to="/login" className="text-amber-600 hover:text-amber-700 font-medium">
+          <Link to="/login" className="text-brand hover:text-brand-dark font-medium">
             Cierra tu sesión para usar el formulario
           </Link>
         </p>
@@ -119,7 +119,7 @@ function GuestTracking() {
               onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
               placeholder="ZS-XXXXXXXX"
               required
-              className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 uppercase"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand uppercase"
             />
           </div>
           <div>
@@ -130,14 +130,14 @@ function GuestTracking() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
               required
-              className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
             />
           </div>
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="mt-5 w-full px-6 py-3 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 disabled:opacity-50 transition-colors"
+          className="mt-5 w-full px-6 py-3 rounded-lg bg-brand text-white font-semibold hover:bg-brand-dark disabled:opacity-50 transition-colors"
         >
           {loading ? 'Buscando...' : 'Buscar mi pedido'}
         </button>
@@ -154,7 +154,7 @@ function GuestTracking() {
       <div className="text-center mt-8">
         <p className="text-sm text-gray-600">
           ¿Compraste con una cuenta?{' '}
-          <Link to="/mis-pedidos" className="text-amber-600 hover:text-amber-700 font-medium">
+          <Link to="/mis-pedidos" className="text-brand hover:text-brand-dark font-medium">
             Revisa tus pedidos aquí
           </Link>
         </p>

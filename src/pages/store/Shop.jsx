@@ -60,13 +60,13 @@ export default function Shop() {
               placeholder="Buscar productos..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-700 bg-gray-700/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-700 bg-gray-700/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand"
             />
           </div>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="px-4 py-3 rounded-xl border border-gray-700 bg-gray-700/50 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="px-4 py-3 rounded-xl border border-gray-700 bg-gray-700/50 text-white focus:outline-none focus:ring-2 focus:ring-brand"
           >
             {categories.map((c) => (
               <option key={c} value={c} className="text-gray-900">

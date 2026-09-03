@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand: var(--brand, #f59e0b);
+  --color-brand-dark: var(--brand-dark, #d97706);
+  --color-brand-light: var(--brand-light, #fbbf24);
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -8,7 +14,92 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Animaciones de entrada */
+:root {
+  --brand: #f59e0b;
+  --brand-dark: #d97706;
+  --brand-light: #fbbf24;
+}
+
+.gradient-brand {
+  background-image: linear-gradient(135deg, var(--brand), var(--brand-dark));
+}
+
+/* ===== SISTEMA DE ANIMACIONES ===== */
+
+/* Scroll reveal: se oculta por defecto y se activa al entrar en viewport */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Variantes de dirección para reveal */
+.reveal-left { transform: translateX(-40px); }
+.reveal-right { transform: translateX(40px); }
+.reveal-zoom { transform: scale(0.9); }
+.reveal-left.is-visible, .reveal-right.is-visible, .reveal-zoom.is-visible {
+  transform: translateX(0) scale(1);
+}
+
+/* Gradiente animado en movimiento (shimmer de marca) */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.gradient-animated {
+  background-size: 200% 200% !important;
+  animation: gradientShift 6s ease infinite;
+}
+
+/* Pulso suave del badge / acentos */
+@keyframes softPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.85; }
+}
+.animate-soft-pulse {
+  animation: softPulse 2.6s ease-in-out infinite;
+}
+
+/* Flotación más viva (doble eje) */
+@keyframes floatLively {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(-1deg); }
+}
+.animate-float-lively {
+  animation: floatLively 6s ease-in-out infinite;
+}
+
+/* Resplandor que se desliza sobre tarjetas */
+@keyframes shine {
+  0% { transform: translateX(-120%) skewX(-20deg); }
+  60%, 100% { transform: translateX(220%) skewX(-20deg); }
+}
+.shine-hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
+  transform: translateX(-120%) skewX(-20deg);
+  pointer-events: none;
+}
+.shine-hover:hover::after {
+  animation: shine 0.9s ease;
+}
+
+/* Animar el contador de valor (dígitos) — pulso al cambiar */
+@keyframes popNumber {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* Entrada de entrada */
 @keyframes fadeInUp {
   from {
     opacity: 0;

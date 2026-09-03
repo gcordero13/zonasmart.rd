@@ -45,7 +45,7 @@ export default function MyOrders() {
           <p className="text-gray-600 mb-4">Aún no tienes pedidos.</p>
           <Link
             to="/tienda"
-            className="inline-block px-6 py-3 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors"
+            className="inline-block px-6 py-3 rounded-lg bg-brand text-white font-semibold hover:bg-brand-dark transition-colors"
           >
             Comprar ahora
           </Link>

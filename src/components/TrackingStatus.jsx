@@ -25,14 +25,14 @@ export default function TrackingStatus({ status }) {
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                        reached ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-400'
+                        reached ? 'bg-brand text-white' : 'bg-gray-200 text-gray-400'
                       }`}
                     >
                       {reached ? '✓' : index + 1}
                     </div>
                     {index < 2 && (
                       <div
-                        className={`flex-1 h-1 rounded ${reached && getStepIndex(status) > index ? 'bg-amber-500' : 'bg-gray-200'}`}
+                        className={`flex-1 h-1 rounded ${reached && getStepIndex(status) > index ? 'bg-brand' : 'bg-gray-200'}`}
                       />
                     )}
                   </div>

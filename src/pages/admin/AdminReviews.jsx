@@ -45,7 +45,7 @@ export default function AdminReviews() {
             <div key={review.id} className="bg-white rounded-lg shadow p-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-semibold text-gray-900">{review.name}</p>
-                <span className="text-amber-500">{'★'.repeat(review.rating)}</span>
+                <span className="text-brand">{'★'.repeat(review.rating)}</span>
               </div>
               <p className="text-gray-600 text-sm mb-3">{review.comment}</p>
               <div className="flex items-center justify-between">

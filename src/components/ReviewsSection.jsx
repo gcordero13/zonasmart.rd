@@ -65,7 +65,7 @@ export default function ReviewsSection() {
             <div key={review.id} className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-semibold text-gray-900">{review.name}</p>
-                <span className="text-amber-500">{"★".repeat(review.rating)}</span>
+                <span className="text-brand">{"★".repeat(review.rating)}</span>
               </div>
               <p className="text-gray-600 text-sm">{review.comment}</p>
               <p className="text-xs text-gray-400 mt-3">
@@ -86,7 +86,7 @@ export default function ReviewsSection() {
                 key={star}
                 type="button"
                 onClick={() => setForm({ ...form, rating: star })}
-                className={`text-2xl ${star <= form.rating ? 'text-amber-500' : 'text-gray-300'}`}
+                className={`text-2xl ${star <= form.rating ? 'text-brand' : 'text-gray-300'}`}
               >
                 ★
               </button>
@@ -98,12 +98,12 @@ export default function ReviewsSection() {
             placeholder="Cuéntanos qué opinas de nuestros productos..."
             rows="3"
             required
-            className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 mb-4"
+            className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand mb-4"
           />
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-2 rounded-md bg-amber-500 text-white font-semibold hover:bg-amber-600 disabled:opacity-50 transition-colors"
+            className="px-6 py-2 rounded-md bg-brand text-white font-semibold hover:bg-brand-dark disabled:opacity-50 transition-colors"
           >
             {saving ? 'Enviando...' : 'Publicar reseña'}
           </button>

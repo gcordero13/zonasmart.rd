@@ -80,7 +80,7 @@ export default function AdminOrders() {
                     <select
                       value={order.status}
                       onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      className="px-2 py-1 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="px-2 py-1 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
                     >
                       <option value="pending">Pendiente</option>
                       <option value="paid">Pagado</option>

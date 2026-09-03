@@ -17,6 +17,8 @@ import AdminProducts from './pages/admin/AdminProducts'
 import AdminOrders from './pages/admin/AdminOrders'
 import AdminCustomers from './pages/admin/AdminCustomers'
 import AdminReviews from './pages/admin/AdminReviews'
+import AdminSellers from './pages/admin/AdminSellers'
+import AdminSettings from './pages/admin/AdminSettings'
 
 function App() {
   return (
@@ -47,6 +49,9 @@ function App() {
         <Route path="pedidos" element={<AdminOrders />} />
         <Route path="resenas" element={<AdminReviews />} />
         <Route path="clientes" element={<AdminCustomers />} />
+        <Route path="vendedores" element={<AdminSellers />} />
+        <Route path="configuracion" element={<AdminSettings />} />
+        <Route path="*" element={<Dashboard />} />
       </Route>
     </Routes>
   )
