@@ -5,6 +5,25 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZonaSmart - Tienda tecnológica</title>
+    <script>
+      // Aplica el color de marca guardado ANTES del primer pintado para
+      // evitar el destello naranja->morado mientras se carga Supabase.
+      (function () {
+        try {
+          var raw = localStorage.getItem('zs_settings_cache_v1')
+          if (raw) {
+            var s = JSON.parse(raw)
+            var p = s && s.primary_color
+            if (p) {
+              var st = document.documentElement.style
+              st.setProperty('--brand', p)
+              st.setProperty('--brand-dark', p)
+              st.setProperty('--brand-light', p)
+            }
+          }
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

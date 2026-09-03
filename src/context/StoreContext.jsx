@@ -1,10 +1,16 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { fetchSettings, DEFAULT_SETTINGS } from '../services/settings'
+import { fetchSettings, DEFAULT_SETTINGS, loadCachedSettings } from '../services/settings'
 
 const StoreContext = createContext(null)
 
+// Tema inicial sincrónico desde caché para evitar el parpadeo
+// (naranja por defecto -> morado real al cargar desde Supabase).
+const cachedInitial = loadCachedSettings()
+const initialSettings = cachedInitial ? { ...DEFAULT_SETTINGS, ...cachedInitial } : DEFAULT_SETTINGS
+applyTheme(initialSettings)
+
 export function StoreProvider({ children }) {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+  const [settings, setSettings] = useState(initialSettings)
 
   useEffect(() => {
     fetchSettings()
