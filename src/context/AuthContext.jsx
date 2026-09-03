@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
       }
     })
 
-    const { data: subscription } = onAuthStateChange((nextUser) => {
+    const subscription = onAuthStateChange((nextUser) => {
       if (mounted) setUser(nextUser)
     })
 

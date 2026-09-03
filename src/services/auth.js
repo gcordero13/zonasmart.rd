@@ -38,9 +38,10 @@ export const getCurrentUser = async () => {
 }
 
 export const onAuthStateChange = (callback) => {
-  return supabase.auth.onAuthStateChange((_event, session) => {
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
     callback(session?.user ?? null)
   })
+  return data.subscription
 }
 
 export const resetPassword = async (email) => {
