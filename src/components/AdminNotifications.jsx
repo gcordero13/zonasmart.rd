@@ -1,24 +1,56 @@
 import { useEffect, useState } from 'react'
 import { subscribeToOrders } from '../services/orders'
+import { subscribeToProducts } from '../services/products'
 
 export default function AdminNotifications() {
   const [alerts, setAlerts] = useState([])
   const [open, setOpen] = useState(false)
+  const [seenStock, setSeenStock] = useState(new Set())
 
   useEffect(() => {
-    const subscription = subscribeToOrders((order) => {
+    const subOrder = subscribeToOrders((order) => {
       const msg = {
         id: order.id,
         title: 'Nuevo pedido',
         text: `${order.customer_name || 'Cliente'} · ${order.tracking_code} · $${Number(order.total).toFixed(2)}`,
         time: new Date().toLocaleTimeString(),
       }
-      setAlerts((prev) => [msg, ...prev].slice(0, 20))
+      setAlerts((prev) => [msg, ...prev].slice(0, 30))
     })
+
+    const subProduct = subscribeToProducts((payload) => {
+      const p = payload.new
+      if (!p || payload.eventType === 'DELETE') return
+      const threshold = Number(p.low_stock_threshold ?? 5)
+      if (Number(p.stock) <= 0) {
+        setAlerts((prev) => [
+          {
+            id: `stock-0-${p.id}`,
+            title: 'Producto agotado',
+            text: `${p.name} se quedó sin stock.`,
+            time: new Date().toLocaleTimeString(),
+          },
+          ...prev,
+        ].slice(0, 30))
+      } else if (Number(p.stock) <= threshold && !seenStock.has(p.id)) {
+        setAlerts((prev) => [
+          {
+            id: `stock-${p.id}`,
+            title: 'Stock bajo',
+            text: `${p.name} está por acabarse (${p.stock} restantes).`,
+            time: new Date().toLocaleTimeString(),
+          },
+          ...prev,
+        ].slice(0, 30))
+        setSeenStock((prev2) => new Set(prev2).add(p.id))
+      }
+    })
+
     return () => {
-      subscription?.unsubscribe()
+      subOrder?.unsubscribe()
+      subProduct?.unsubscribe()
     }
-  }, [])
+  }, [seenStock])
 
   const dismiss = (id) => setAlerts((prev) => prev.filter((a) => a.id !== id))
 

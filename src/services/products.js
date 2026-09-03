@@ -31,6 +31,26 @@ export const deleteProduct = async (id) => {
   if (error) throw error
 }
 
+export const decrementProductStock = async (id, qty) => {
+  const { data: current, error: getErr } = await supabase.from(TABLE).select('id, stock').eq('id', id).single()
+  if (getErr) throw getErr
+  const newStock = Math.max(0, Number(current.stock) - Number(qty || 1))
+  const { data, error } = await supabase
+    .from(TABLE)
+    .update({ stock: newStock })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export const fetchLowStockProducts = async () => {
+  const { data, error } = await supabase.from(TABLE).select('*')
+  if (error) throw error
+  return (data || []).filter((p) => p.stock <= p.low_stock_threshold)
+}
+
 export const subscribeToProducts = (callback) => {
   return supabase
     .channel('products-changes')

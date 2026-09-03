@@ -5,10 +5,19 @@ import { uploadImage, getPublicUrl } from '../../services/storage'
 const emptyForm = {
   name: '',
   description: '',
+  category: '',
   price: '',
   stock: '',
-  category: '',
   delivery_days: '',
+  details: '',
+  color: '',
+  weight: '',
+  cost_per_unit: '',
+  purchase_link: '',
+  additional_expenses: '',
+  low_stock_threshold: '',
+  shipping_price: '',
+  shipping_type: 'standard',
 }
 
 export default function AdminProducts() {
@@ -54,6 +63,15 @@ export default function AdminProducts() {
         stock: Number(form.stock),
         category: form.category,
         delivery_days: form.delivery_days ? Number(form.delivery_days) : null,
+        details: form.details || null,
+        color: form.color || null,
+        weight: form.weight ? Number(form.weight) : null,
+        cost_per_unit: form.cost_per_unit ? Number(form.cost_per_unit) : 0,
+        purchase_link: form.purchase_link || null,
+        additional_expenses: form.additional_expenses ? Number(form.additional_expenses) : 0,
+        low_stock_threshold: form.low_stock_threshold ? Number(form.low_stock_threshold) : 5,
+        shipping_price: form.shipping_price ? Number(form.shipping_price) : 0,
+        shipping_type: form.shipping_type,
       }
 
       if (imageFile) {
@@ -86,6 +104,15 @@ export default function AdminProducts() {
       stock: product.stock,
       category: product.category,
       delivery_days: product.delivery_days ?? '',
+      details: product.details ?? '',
+      color: product.color ?? '',
+      weight: product.weight ?? '',
+      cost_per_unit: product.cost_per_unit ?? '',
+      purchase_link: product.purchase_link ?? '',
+      additional_expenses: product.additional_expenses ?? '',
+      low_stock_threshold: product.low_stock_threshold ?? '',
+      shipping_price: product.shipping_price ?? '',
+      shipping_type: product.shipping_type || 'standard',
     })
     setShowForm(true)
   }
@@ -151,29 +178,17 @@ export default function AdminProducts() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Precio ($)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Alerta de stock mínimo</label>
               <input
                 type="number"
-                name="price"
-                value={form.price}
+                name="low_stock_threshold"
+                value={form.low_stock_threshold}
                 onChange={handleChange}
-                required
                 min="0"
-                step="0.01"
+                placeholder="ej: 5"
                 className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-              <input
-                type="number"
-                name="stock"
-                value={form.stock}
-                onChange={handleChange}
-                required
-                min="0"
-                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
-              />
+              <p className="text-xs text-gray-400 mt-1">Te avisamos cuando el stock esté en o por debajo de este número.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -189,25 +204,149 @@ export default function AdminProducts() {
                 className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
               />
             </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-              <textarea
-                name="description"
-                value={form.description}
+          </div>
+
+          <h3 className="mt-6 mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide">
+            Finanzas del producto (en $)
+          </h3>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio de venta ($)</label>
+              <input
+                type="number"
+                name="price"
+                value={form.price}
                 onChange={handleChange}
-                rows="3"
+                required
+                min="0"
+                step="0.01"
                 className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
               />
             </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Costo por unidad ($)</label>
               <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files[0])}
-                className="w-full"
+                type="number"
+                name="cost_per_unit"
+                value={form.cost_per_unit}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Gastos adicionales por unidad ($)</label>
+              <input
+                type="number"
+                name="additional_expenses"
+                value={form.additional_expenses}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                placeholder="envío, aduana, etc."
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Enlace donde lo compras</label>
+              <input
+                type="url"
+                name="purchase_link"
+                value={form.purchase_link}
+                onChange={handleChange}
+                placeholder="https://..."
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+          </div>
+
+          <h3 className="mt-6 mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide">
+            Detalles y envío
+          </h3>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+              <input
+                type="text"
+                name="color"
+                value={form.color}
+                onChange={handleChange}
+                placeholder="ej: Blanco"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Peso (kg)</label>
+              <input
+                type="number"
+                name="weight"
+                value={form.weight}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                placeholder="ej: 1.5"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio de envío ($)</label>
+              <input
+                type="number"
+                name="shipping_price"
+                value={form.shipping_price}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+            <div className="sm:col-span-3 sm:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de envío</label>
+              <select
+                name="shipping_type"
+                value={form.shipping_type}
+                onChange={handleChange}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand bg-white"
+              >
+                <option value="standard">Estándar</option>
+                <option value="express">Express</option>
+                <option value="pickup">Recogida en tienda</option>
+              </select>
+            </div>
+            <div className="sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Detalles importantes del producto</label>
+              <textarea
+                name="details"
+                value={form.details}
+                onChange={handleChange}
+                rows="2"
+                placeholder="Especificaciones, características, variedad, etc."
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              rows="3"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
+            />
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImageFile(e.target.files[0])}
+              className="w-full"
+            />
           </div>
           <button
             type="submit"
@@ -233,6 +372,8 @@ export default function AdminProducts() {
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Producto</th>
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Categoría</th>
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Precio</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Costo</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Ganancia</th>
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Stock</th>
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Acciones</th>
               </tr>
@@ -256,7 +397,29 @@ export default function AdminProducts() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">{p.category}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">${Number(p.price).toFixed(2)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{p.stock}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    ${(Number(p.cost_per_unit || 0) + Number(p.additional_expenses || 0)).toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-semibold text-green-600">
+                    ${(Number(p.price) - Number(p.cost_per_unit || 0) - Number(p.additional_expenses || 0)).toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <span
+                      className={
+                        p.stock <= 0
+                          ? 'text-red-600 font-semibold'
+                          : p.stock <= (p.low_stock_threshold ?? 5)
+                            ? 'text-amber-600 font-semibold'
+                            : 'text-gray-600'
+                      }
+                    >
+                      {p.stock}
+                    </span>
+                    {p.stock > 0 && p.stock <= (p.low_stock_threshold ?? 5) && (
+                      <span className="ml-2 text-xs text-amber-600">bajo</span>
+                    )}
+                    {p.stock <= 0 && <span className="ml-2 text-xs text-red-600">agotado</span>}
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => handleEdit(p)}

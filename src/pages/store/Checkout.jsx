@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { createOrder, generateTrackingCode } from '../../services/orders'
 import { resolveSellerByCode, recordCommission } from '../../services/sellers'
+import { decrementProductStock } from '../../services/products'
 
 export default function Checkout() {
   const { items, totalPrice, totalItems, clearCart } = useCart()
@@ -43,6 +44,7 @@ export default function Checkout() {
     setLoading(true)
     setError(null)
     try {
+      const shipping = items.reduce((acc, i) => acc + Number(i.shipping_price || 0) * i.quantity, 0)
       const order = {
         user_id: user.id,
         email: form.email,
@@ -51,30 +53,37 @@ export default function Checkout() {
         address: form.address,
         city: form.city,
         zip: form.zip,
-        items: items.map(({ id, name, price, quantity, image_url, delivery_days }) => ({
+        items: items.map(({ id, name, price, quantity, image_url, delivery_days, shipping_price }) => ({
           id,
           name,
           price,
           quantity,
           image_url,
           delivery_days,
+          shipping_price: Number(shipping_price || 0),
         })),
-        total: totalPrice,
+        subtotal: totalPrice,
+        shipping,
+        total: totalPrice + shipping,
         status: 'pending',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
       const created = await createOrder(order)
 
+      for (const item of items) {
+        await decrementProductStock(item.id, item.quantity).catch(() => null)
+      }
+
       if (refCode) {
         const seller = await resolveSellerByCode(refCode).catch(() => null)
         if (seller && seller.id !== user.id && seller.seller_id !== user.id) {
-          const amount = totalPrice * (seller.commission_rate / 100)
+          const amount = order.total * (seller.commission_rate / 100)
           await recordCommission({
             order_id: created.id,
             seller_id: seller.id,
             amount: Number(amount.toFixed(2)),
-            order_total: totalPrice,
+            order_total: order.total,
           }).catch(() => null)
         }
       }
@@ -101,6 +110,9 @@ export default function Checkout() {
       </div>
     )
   }
+
+  const shipping = items.reduce((acc, i) => acc + Number(i.shipping_price || 0) * i.quantity, 0)
+  const grandTotal = totalPrice + shipping
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
@@ -180,11 +192,13 @@ export default function Checkout() {
           </div>
           <div className="flex justify-between mb-2">
             <span className="text-gray-600">Envío</span>
-            <span className="font-medium">Gratis</span>
+            <span className="font-medium">
+              {shipping > 0 ? `$${shipping.toFixed(2)}` : 'Gratis'}
+            </span>
           </div>
           <div className="flex justify-between font-bold text-lg">
             <span>Total</span>
-            <span>${totalPrice.toFixed(2)}</span>
+            <span>${grandTotal.toFixed(2)}</span>
           </div>
         </div>
 
