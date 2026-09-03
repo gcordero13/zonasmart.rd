@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { fetchProducts } from '../../services/products'
 import ProductCard from '../../components/ProductCard'
 import ReviewsSection from '../../components/ReviewsSection'
 import ServicesSection from '../../components/ServicesSection'
 import Reveal from '../../components/Reveal'
+import AnimatedCounter from '../../components/AnimatedCounter'
 import { useStore } from '../../context/StoreContext'
 
 export default function Home() {
@@ -141,53 +142,91 @@ export default function Home() {
 
   return (
     <div>
-      <section className="relative bg-gradient-to-br from-gray-900 via-gray-900 to-brand-dark overflow-hidden">
+      <section className="relative bg-gray-950 overflow-hidden">
+        {/* Fondo animado en capas */}
         <div className="absolute inset-0">
-          <div className="absolute -top-32 -right-32 w-96 h-96 bg-brand/20 rounded-full blur-3xl animate-soft-pulse" />
-          <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-brand-dark/30 rounded-full blur-3xl" />
-          <div className="absolute top-1/4 left-1/2 w-40 h-40 bg-brand-light/10 rounded-full blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-brand-dark/40" />
+          <div className="bg-grid-faint absolute inset-0 opacity-40" />
+          <motion.div
+            className="absolute -top-24 -right-20 w-[28rem] h-[28rem] rounded-full bg-brand/20 blur-3xl"
+            animate={{ scale: [1, 1.15, 1], x: [0, -20, 0], y: [0, 16, 0] }}
+            transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute -bottom-32 -left-24 w-[26rem] h-[26rem] rounded-full bg-brand-dark/25 blur-3xl"
+            animate={{ scale: [1.1, 1, 1.1], x: [0, 24, 0] }}
+            transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute top-1/3 right-1/2 w-64 h-64 rounded-full bg-brand-light/10 blur-3xl"
+            animate={{ y: [0, -24, 0], opacity: [0.5, 0.9, 0.5] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          {/* Partículas decorativas */}
+          {[
+            ['top-[18%] left-[12%]', 0],
+            ['top-[30%] right-[16%]', 0.6],
+            ['bottom-[24%] right-[28%]', 1.2],
+            ['top-[55%] left-[28%]', 1.8],
+          ].map(([pos], i) => (
+            <motion.span
+              key={i}
+              className={`absolute ${pos} w-1.5 h-1.5 rounded-full bg-brand-light/70`}
+              animate={{ y: [0, -18, 0], opacity: [0.2, 0.8, 0.2] }}
+              transition={{ duration: 5 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
+            />
+          ))}
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 md:py-32 grid md:grid-cols-2 gap-12 items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 md:py-28 grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
           <motion.div
             initial="hidden"
             animate="visible"
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.12 } },
-            }}
-            className="animate-fade-in-up"
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }}
           >
-            <motion.span
+            <motion.div
               variants={{
                 hidden: { opacity: 0, y: 16 },
                 visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
               }}
-              className="inline-block animate-soft-pulse bg-brand/20 text-brand-light border border-brand/30 px-4 py-1.5 rounded-full text-sm font-medium mb-6"
+              className="inline-flex items-center gap-2 bg-white/5 border border-white/10 backdrop-blur px-4 py-1.5 rounded-full text-sm font-medium text-brand-light mb-6"
             >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-light opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-light" />
+              </span>
               Instalación y soporte profesional incluidos
-            </motion.span>
+            </motion.div>
+
             <motion.h1
               variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] } },
+                hidden: { opacity: 0, y: 24 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.21, 0.47, 0.32, 0.98] } },
               }}
-              className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-white mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.05] text-white mb-6"
             >
               {titlePrefix}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-light to-brand-dark">
+              <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-brand-light via-brand to-brand-dark">
                 inteligente
+                <motion.span
+                  className="absolute left-0 right-0 -bottom-1.5 h-1.5 rounded-full bg-gradient-to-r from-brand-light to-brand-dark"
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: 0.8, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                />
               </span>
             </motion.h1>
+
             <motion.p
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay: 0.1, ease: 'easeOut' } },
               }}
-              className="text-base sm:text-lg text-gray-300 mb-8 max-w-lg"
+              className="text-base sm:text-lg text-gray-300 mb-8 max-w-lg leading-relaxed"
             >
               {hero.subtitle}
             </motion.p>
+
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -197,53 +236,127 @@ export default function Home() {
             >
               <Link
                 to="/tienda"
-                className="gradient-animated group inline-flex items-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-brand to-brand-dark text-white font-bold hover:scale-[1.03] transition-transform shadow-lg shadow-brand/30"
+                className="gradient-animated group inline-flex items-center gap-2 px-7 sm:px-8 py-4 rounded-xl bg-gradient-to-r from-brand to-brand-dark text-white font-bold hover:scale-[1.04] transition-transform shadow-brand-glow"
               >
-                Ver catálogo
+                Explorar la tienda
                 <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </Link>
               <Link
-                to="/seguimiento"
-                className="px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl border border-gray-600 text-white font-semibold hover:bg-white/10 transition-colors"
+                to="/cotizador"
+                className="group inline-flex items-center gap-2 px-7 sm:px-8 py-4 rounded-xl border border-white/15 text-white font-semibold hover:bg-white/10 transition-colors"
               >
-                Seguir mi pedido
+                <svg className="w-5 h-5 text-brand-light" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Cotizar sin compromiso
               </Link>
             </motion.div>
 
-            <div className="mt-10 grid grid-cols-3 gap-6 border-t border-white/10 pt-6 max-w-md">
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay: 0.35, ease: 'easeOut' } },
+              }}
+              className="mt-10 grid grid-cols-3 gap-6 border-t border-white/10 pt-7 max-w-md"
+            >
               <div>
-                <p className="text-2xl font-bold text-white">Garantía</p>
-                <p className="text-xs text-gray-400 mt-0.5">en cada compra</p>
+                <AnimatedCounter value={100} suffix="%" className="text-2xl font-extrabold text-white" />
+                <p className="text-xs text-gray-400 mt-1">Pago protegido</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">24/7</p>
-                <p className="text-xs text-gray-400 mt-0.5">soporte real</p>
+                <span className="text-2xl font-extrabold text-white">24/7</span>
+                <p className="text-xs text-gray-400 mt-1">Soporte real</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">100%</p>
-                <p className="text-xs text-gray-400 mt-0.5">pago seguro</p>
+                <AnimatedCounter value={1} className="text-2xl font-extrabold text-white" />
+                <p className="text-xs text-gray-400 mt-1">Garantía incluida</p>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
 
-          <div className="hidden md:block animate-float-lively">
-            <div className="shine-hover relative overflow-hidden bg-gradient-to-br from-brand-light/20 to-brand-dark/20 rounded-3xl p-8 border border-brand/20">
-              <div className="gradient-brand text-white w-20 h-20 rounded-2xl flex items-center justify-center mx-auto animate-soft-pulse">
-                <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16.72 11.06a2.96 2.96 0 00-3.09-4.08 7.5 7.5 0 10-6.85 11.16 2.96 2.96 0 003.09-4.08 1.5 1.5 0 112.5 0 2.96 2.96 0 003.09 4.08l-.74-3.08zM13.5 8.5h.01M8.5 15.5h.01"
-                  />
-                </svg>
+          {/* Visual de producto flotante */}
+          <motion.div
+            initial={{ opacity: 0, y: 40, rotate: -2 }}
+            animate={{ opacity: 1, y: 0, rotate: 0 }}
+            transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="hidden md:block relative"
+          >
+            <motion.div
+              animate={{ y: [0, -14, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+              className="relative"
+            >
+              <div className="shine-hover relative overflow-hidden bg-gradient-to-br from-white/10 to-white/[0.02] border border-white/10 rounded-3xl p-8 backdrop-blur-sm shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand/10 to-transparent" />
+                <div className="relative flex items-center gap-4">
+                  <div className="gradient-brand text-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-brand-glow shrink-0">
+                    <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.72 11.06a2.96 2.96 0 00-3.09-4.08 7.5 7.5 0 10-6.85 11.16 2.96 2.96 0 003.09-4.08 1.5 1.5 0 112.5 0 2.96 2.96 0 003.09 4.08l-.74-3.08zM13.5 8.5h.01M8.5 15.5h.01" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-lg">Kit de Seguridad Inteligente</p>
+                    <p className="text-sm text-gray-400">Cámara + sensor · Envío en 24h</p>
+                  </div>
+                </div>
+
+                <div className="relative mt-6 space-y-3">
+                  {[
+                    ['Seguridad 24/7', 'bg-green-500/15 text-green-300 border-green-400/20'],
+                    ['Instalación incluida', 'bg-brand/15 text-brand-light border-brand/20'],
+                    ['Garantía de 1 año', 'bg-blue-500/15 text-blue-300 border-blue-400/20'],
+                  ].map(([label, cls], i) => (
+                    <motion.div
+                      key={label}
+                      initial={{ opacity: 0, x: 24 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.7 + i * 0.15, duration: 0.5 }}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border ${cls} backdrop-blur`}
+                    >
+                      <span className="text-sm font-medium">{label}</span>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.4" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
-              <p className="text-center text-white font-semibold text-lg mt-4">
-                Seguridad inteligente para tu hogar
-              </p>
-            </div>
-          </div>
+
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute -top-5 -right-4 bg-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-2"
+              >
+                <span className="text-green-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                </span>
+                <div>
+                  <p className="text-xs text-gray-500">Entrega</p>
+                  <p className="text-sm font-bold text-gray-900">Todo el país</p>
+                </div>
+              </motion.div>
+
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute -bottom-5 -left-4 bg-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-2"
+              >
+                <span className="flex -space-x-2">
+                  {['bg-brand', 'bg-brand-dark', 'bg-brand-light'].map((c, i) => (
+                    <span key={i} className={`w-6 h-6 rounded-full border-2 border-white ${c}`} />
+                  ))}
+                </span>
+                <div>
+                  <p className="text-xs text-gray-500">Clientes</p>
+                  <p className="text-sm font-bold text-gray-900">+1,000 confían</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
@@ -403,6 +516,112 @@ export default function Home() {
       </section>
 
       <ReviewsSection />
+
+      <section className="bg-gradient-to-b from-white to-gray-50 py-16 sm:py-20">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <Reveal className="text-center mb-12">
+            <span className="inline-block gradient-brand text-white text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
+              Preguntas frecuentes
+            </span>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+              Resolvemos tus dudas
+            </h2>
+          </Reveal>
+
+          <div className="space-y-3">
+            {[
+              ['¿Cómo realizo una compra?', 'Agrega los productos al carrito, completa tus datos de envío y confirma tu pedido. Recibirás un código de seguimiento para monitorear la entrega.'],
+              ['¿Cuánto tarda la entrega?', 'Realizamos envíos a todo el país. La mayoría de los pedidos se despachan en 24 horas y el plazo de entrega depende de tu zona.'],
+              ['¿Ofrecen instalación profesional?', 'Sí. Muchos de nuestros productos pueden incluir instalación profesional realizada por técnicos certificados para garantizar que todo funcione desde el primer día.'],
+              ['¿Qué métodos de pago aceptan?', 'Aceptamos pagos con tarjeta de crédito, débito y otros métodos seguros. La pasarela de pago se está integrando, pero tu pedido queda registrado de forma segura.'],
+              ['¿Puedo cotizar varios productos?', 'Claro. Usa nuestro cotizador para seleccionar varios equipos, elegir si requieren instalación y generar una cotización profesional descargable.'],
+              ['¿Qué pasa si algo sale mal?', 'Todos nuestros productos cuentan con garantía. Si tienes algún problema, nuestro equipo de soporte 24/7 te atiende por WhatsApp o correo para resolverlo.'],
+            ].map(([q, a], i) => (
+              <FaqItem key={i} question={q} answer={a} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-gray-950 py-16">
+        <Reveal className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <span className="inline-block bg-white/10 text-brand-light text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
+            Novedades y ofertas
+          </span>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+            Recibe las mejores ofertas
+          </h2>
+          <p className="text-gray-400 mb-8">
+            Suscríbete a nuestro boletín y entérate de lanzamientos, promociones exclusivas y consejos para tu hogar inteligente.
+          </p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              const email = e.currentTarget.email.value
+              if (email) {
+                window.location.href = settings.whatsapp
+                  ? `https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`¡Hola! Me quiero suscribir a novedades con el correo: ${email}`)}`
+                  : `mailto:${settings.email}?subject=Suscripción a novedades&body=${encodeURIComponent(`Me quiero suscribir con el correo: ${email}`)}`
+              }
+            }}
+            className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+          >
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="tu@correo.com"
+              className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand"
+            />
+            <button
+              type="submit"
+              className="px-6 py-3 rounded-xl gradient-brand text-white font-semibold hover:brightness-110 transition shadow-brand-glow"
+            >
+              Suscribirme
+            </button>
+          </form>
+          <p className="text-xs text-gray-500 mt-4">
+            Sin spam. Cancela cuando quieras.
+          </p>
+        </Reveal>
+      </section>
     </div>
+  )
+}
+
+function FaqItem({ question, answer }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <Reveal>
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
+        >
+          <span className="font-semibold text-gray-900">{question}</span>
+          <motion.span
+            animate={{ rotate: open ? 45 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+          </motion.span>
+        </button>
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.21, 0.47, 0.32, 0.98] }}
+            >
+              <p className="px-5 pb-5 text-gray-600 text-sm leading-relaxed">{answer}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </Reveal>
   )
 }

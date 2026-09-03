@@ -14,6 +14,8 @@ import MyOrders from './pages/store/MyOrders'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import SellerPortal from './pages/seller/SellerPortal'
+import NotFound from './pages/store/NotFound'
+import LegalPage from './pages/store/LegalPage'
 import Dashboard from './pages/admin/Dashboard'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminOrders from './pages/admin/AdminOrders'
@@ -39,6 +41,10 @@ function App() {
         <Route path="/portal-vendedor" element={<SellerPortal />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
+        <Route path="/privacidad" element={<LegalPage page="privacidad" />} />
+        <Route path="/terminos" element={<LegalPage page="terminos" />} />
+        <Route path="/devoluciones" element={<LegalPage page="devoluciones" />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
 
       <Route

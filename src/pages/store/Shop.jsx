@@ -10,6 +10,7 @@ export default function Shop() {
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
+  const [sort, setSort] = useState('recent')
 
   useEffect(() => {
     fetchProducts()
@@ -41,8 +42,22 @@ export default function Shop() {
         p.name.toLowerCase().includes(search.toLowerCase())
       )
     }
-    setFiltered(result)
-  }, [search, category, products])
+    const sorted = [...result]
+    switch (sort) {
+      case 'price-asc':
+        sorted.sort((a, b) => Number(a.price) - Number(b.price))
+        break
+      case 'price-desc':
+        sorted.sort((a, b) => Number(b.price) - Number(a.price))
+        break
+      case 'name':
+        sorted.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      default:
+        sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    }
+    setFiltered(sorted)
+  }, [search, category, sort, products])
 
   const categories = ['all', ...new Set(products.map((p) => p.category))]
 
@@ -70,9 +85,13 @@ export default function Shop() {
         >
           Encuentra la tecnología perfecta para tu hogar inteligente
         </motion.p>
-        <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+        <div className="flex flex-col sm:flex-row gap-3 max-w-4xl">
           <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0a6.5 6.5 0 10-9.2 0 6.5 6.5 0 009.2 0z" />
+              </svg>
+            </span>
             <input
               type="text"
               placeholder="Buscar productos..."
@@ -91,6 +110,16 @@ export default function Shop() {
                 {c === 'all' ? 'Todas las categorías' : c}
               </option>
             ))}
+          </select>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="px-4 py-3 rounded-xl border border-gray-700 bg-gray-700/50 text-white focus:outline-none focus:ring-2 focus:ring-brand"
+          >
+            <option value="recent" className="text-gray-900">Más recientes</option>
+            <option value="price-asc" className="text-gray-900">Precio: menor a mayor</option>
+            <option value="price-desc" className="text-gray-900">Precio: mayor a menor</option>
+            <option value="name" className="text-gray-900">Nombre (A-Z)</option>
           </select>
         </div>
       </motion.div>
