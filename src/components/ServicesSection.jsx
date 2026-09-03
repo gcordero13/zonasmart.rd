@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchActiveServices } from '../services/services'
 import Reveal from './Reveal'
+import ServiceQuoteModal from './ServiceQuoteModal'
 
 const iconPath = (icon) => {
   const map = {
@@ -19,6 +20,7 @@ const iconPath = (icon) => {
 export default function ServicesSection() {
   const [services, setServices] = useState([])
   const [loading, setLoading] = useState(true)
+  const [quoteService, setQuoteService] = useState(null)
 
   useEffect(() => {
     fetchActiveServices()
@@ -46,7 +48,13 @@ export default function ServicesSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {services.map((s, i) => (
             <Reveal key={s.id} delay={(i % 4) * 80} variant="reveal-zoom">
-              <div className="group trust-card rounded-2xl p-6 h-full flex flex-col">
+              <div
+                className="group trust-card rounded-2xl p-6 h-full flex flex-col cursor-pointer"
+                onClick={() => setQuoteService(s)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setQuoteService(s)}
+              >
                 <div className="w-14 h-14 gradient-brand text-white rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md shadow-brand/20">
                   <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d={iconPath(s.icon)} />
@@ -57,11 +65,15 @@ export default function ServicesSection() {
                 {Number(s.price) > 0 && (
                   <p className="text-brand-dark font-bold text-lg">${Number(s.price).toFixed(2)}</p>
                 )}
+                <p className="mt-2 text-xs font-semibold text-brand-dark group-hover:underline">
+                  Cotizar este servicio →
+                </p>
               </div>
             </Reveal>
           ))}
         </div>
       </div>
+      {quoteService && <ServiceQuoteModal service={quoteService} onClose={() => setQuoteService(null)} />}
     </section>
   )
 }

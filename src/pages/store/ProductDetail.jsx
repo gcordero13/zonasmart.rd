@@ -4,21 +4,35 @@ import { motion } from 'framer-motion'
 import { fetchProductById } from '../../services/products'
 import { useCart } from '../../context/CartContext'
 
+function getProductImages(product) {
+  const list = []
+  if (product.image_url) list.push(product.image_url)
+  if (Array.isArray(product.image_gallery)) {
+    product.image_gallery.forEach((u) => u && u !== product.image_url && list.push(u))
+  }
+  return list
+}
+
 export default function ProductDetail() {
   const { id } = useParams()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [withInstallation, setWithInstallation] = useState(false)
+  const [activeImg, setActiveImg] = useState(0)
   const { addItem } = useCart()
 
   useEffect(() => {
     setLoading(true)
+    setActiveImg(0)
     fetchProductById(id)
       .then(setProduct)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [id])
+
+  const images = product ? getProductImages(product) : []
+  const currentImage = images[activeImg % Math.max(1, images.length)] || null
 
   const handleAdd = () => {
     if (product.requires_installation && withInstallation) {
@@ -52,13 +66,62 @@ export default function ProductDetail() {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
-          className="aspect-square bg-gray-200 rounded-lg overflow-hidden"
         >
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              Sin imagen
+          <div className="relative aspect-square bg-gray-200 rounded-lg overflow-hidden">
+            {currentImage ? (
+              <img
+                src={currentImage}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                key={currentImage}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                Sin imagen
+              </div>
+            )}
+
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() => setActiveImg((i) => (i - 1 + images.length) % images.length)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-gray-700 flex items-center justify-center shadow transition"
+                  aria-label="Imagen anterior"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setActiveImg((i) => (i + 1) % images.length)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-gray-700 flex items-center justify-center shadow transition"
+                  aria-label="Siguiente imagen"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                <span className="absolute bottom-3 right-3 text-xs font-medium bg-black/50 text-white px-2 py-1 rounded-md">
+                  {activeImg + 1} / {images.length}
+                </span>
+              </>
+            )}
+          </div>
+
+          {images.length > 1 && (
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+              {images.map((img, i) => (
+                <button
+                  key={img}
+                  onClick={() => setActiveImg(i)}
+                  className={`w-16 h-16 rounded-md overflow-hidden shrink-0 border-2 transition ${
+                    i === activeImg ? 'border-brand' : 'border-transparent opacity-70 hover:opacity-100'
+                  }`}
+                  aria-label={`Imagen ${i + 1}`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
             </div>
           )}
         </motion.div>

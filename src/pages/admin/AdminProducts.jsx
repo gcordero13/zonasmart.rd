@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react'
 import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../../services/products'
 import { uploadImage, getPublicUrl } from '../../services/storage'
 
+function normGallery(gal) {
+  if (Array.isArray(gal)) return gal.filter(Boolean)
+  return []
+}
+
 const emptyForm = {
   name: '',
   description: '',
@@ -49,7 +54,7 @@ export default function AdminProducts() {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
-  const [imageFile, setImageFile] = useState(null)
+  const [imageFiles, setImageFiles] = useState([])
   const [saving, setSaving] = useState(false)
 
   const load = () => {
@@ -64,7 +69,7 @@ export default function AdminProducts() {
 
   const resetForm = () => {
     setForm(emptyForm)
-    setImageFile(null)
+    setImageFiles([])
     setEditing(null)
     setShowForm(false)
   }
@@ -99,11 +104,27 @@ export default function AdminProducts() {
         shipping_zones: parseShippingZones(form.shipping_zones),
       }
 
-      if (imageFile) {
-        const ext = imageFile.name.split('.').pop()
-        const path = `products/${Date.now()}_${editing?.id || 'new'}.${ext}`
-        await uploadImage(imageFile, path)
-        data.image_url = getPublicUrl(path)
+      // Subir nuevas imágenes (pueden ser varias) y armar la galería
+      const uploaded = []
+      for (const f of imageFiles) {
+        const ext = (f.name.split('.').pop() || 'jpg').toLowerCase()
+        const path = `products/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
+        await uploadImage(f, path)
+        uploaded.push(getPublicUrl(path))
+      }
+
+      const existingGallery = editing ? normGallery(editing.image_gallery) : []
+      const gallery = [...existingGallery, ...uploaded]
+
+      if (editing && editing.image_url && gallery.length === 0) {
+        // se mantiene la portada actual si no se subieron nuevas imágenes
+        data.image_url = editing.image_url
+        data.image_gallery = existingGallery
+      } else {
+        // la primera imagen subida (o existente) es la portada
+        const first = uploaded[0] || editing?.image_url || null
+        data.image_url = first
+        data.image_gallery = gallery.filter((u) => u !== first)
       }
 
       if (editing) {
@@ -122,6 +143,7 @@ export default function AdminProducts() {
 
   const handleEdit = (product) => {
     setEditing(product)
+    setImageFiles([])
     setForm({
       name: product.name,
       description: product.description,
@@ -414,13 +436,38 @@ export default function AdminProducts() {
             />
           </div>
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Imágenes del producto (la primera será la portada)
+            </label>
             <input
               type="file"
               accept="image/*"
-              onChange={(e) => setImageFile(e.target.files[0])}
+              multiple
+              onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
               className="w-full"
             />
+            <p className="text-xs text-gray-400 mt-1">
+              Puedes seleccionar varias. En edición se conservan las imágenes ya guardadas.
+            </p>
+            {(imageFiles.length > 0 || (editing && normGallery(editing.image_gallery).length > 0)) && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {editing?.image_url && (
+                  <div className="w-16 h-16 rounded-md overflow-hidden border border-gray-200">
+                    <img src={editing.image_url} alt="Portada" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                {normGallery(editing?.image_gallery).map((u) => (
+                  <div key={u} className="w-16 h-16 rounded-md overflow-hidden border border-gray-200">
+                    <img src={u} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+                {imageFiles.map((f, i) => (
+                  <div key={i} className="w-16 h-16 rounded-md overflow-hidden border border-gray-200">
+                    <img src={URL.createObjectURL(f)} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <button
             type="submit"

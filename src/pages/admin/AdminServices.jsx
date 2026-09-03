@@ -1,9 +1,25 @@
 import { useEffect, useState } from 'react'
 import { fetchServices, createService, updateService, deleteService } from '../../services/services'
 
-const emptyForm = { title: '', description: '', price: '', icon: 'wrench', active: true }
+const emptyForm = {
+  title: '',
+  description: '',
+  price: '',
+  icon: 'wrench',
+  active: true,
+  config: { header: '', tiers: [], items: [] },
+}
 
 const ICONS = ['wrench', 'shield', 'truck', 'support', 'star', 'home', 'lock', 'phone']
+
+const normConfig = (c) => {
+  const cfg = c && typeof c === 'object' ? c : {}
+  return {
+    header: cfg.header || '',
+    tiers: Array.isArray(cfg.tiers) ? cfg.tiers : [],
+    items: Array.isArray(cfg.items) ? cfg.items : [],
+  }
+}
 
 const iconPath = (icon) => {
   const map = {
@@ -52,6 +68,26 @@ export default function AdminServices() {
     }
   }
 
+  const setConfig = (fn) => setForm((f) => ({ ...f, config: fn(normConfig(f.config)) }))
+
+  const addTier = () =>
+    setConfig((c) => ({
+      ...c,
+      tiers: [...c.tiers, { key: `t${Date.now()}`, label: '', price: '', description: '' }],
+    }))
+  const updateTier = (i, patch) =>
+    setConfig((c) => ({ ...c, tiers: c.tiers.map((t, j) => (j === i ? { ...t, ...patch } : t)) }))
+  const removeTier = (i) => setConfig((c) => ({ ...c, tiers: c.tiers.filter((_, j) => j !== i) }))
+
+  const addItem = () =>
+    setConfig((c) => ({
+      ...c,
+      items: [...c.items, { key: `i${Date.now()}`, label: '', price: '', unit: 'unidad(es)' }],
+    }))
+  const updateItem = (i, patch) =>
+    setConfig((c) => ({ ...c, items: c.items.map((t, j) => (j === i ? { ...t, ...patch } : t)) }))
+  const removeItem = (i) => setConfig((c) => ({ ...c, items: c.items.filter((_, j) => j !== i) }))
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -63,6 +99,20 @@ export default function AdminServices() {
         price: form.price ? Number(form.price) : 0,
         icon: form.icon || 'wrench',
         active: !!form.active,
+        config: {
+          header: form.config.header || '',
+          tiers: (form.config.tiers || [])
+            .filter((t) => t.label)
+            .map((t) => ({ key: t.key, label: t.label, price: Number(t.price || 0), description: t.description || '' })),
+          items: (form.config.items || [])
+            .filter((it) => it.label)
+            .map((it) => ({
+              key: it.key,
+              label: it.label,
+              price: Number(it.price || 0),
+              unit: it.unit || 'unidad(es)',
+            })),
+        },
       }
       if (editing) {
         await updateService(editing.id, data)
@@ -80,7 +130,14 @@ export default function AdminServices() {
 
   const handleEdit = (s) => {
     setEditing(s)
-    setForm({ title: s.title, description: s.description, price: s.price, icon: s.icon, active: !!s.active })
+    setForm({
+      title: s.title,
+      description: s.description,
+      price: s.price,
+      icon: s.icon,
+      active: !!s.active,
+      config: normConfig(s.config),
+    })
     setShowForm(true)
   }
 
@@ -183,6 +240,104 @@ export default function AdminServices() {
               />
             </div>
           </div>
+
+          {/* Opciones configurables del servicio */}
+          <div className="mt-6 border-t border-gray-100 pt-4">
+            <p className="text-sm font-semibold text-gray-700 mb-1">Cotización con opciones (opcional)</p>
+            <p className="text-xs text-gray-500 mb-3">
+              Si activas esto, los clientes podrán elegir un nivel (básica/avanzada) e indicar cantidades por
+              ítem (habitaciones, baños, unidades, etc.) para armar su cotización.
+            </p>
+            <div className="sm:col-span-2 mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Texto guía</label>
+              <input
+                type="text"
+                value={form.config.header}
+                onChange={(e) => setConfig((c) => ({ ...c, header: e.target.value }))}
+                placeholder="ej: ¿Cuántas habitaciones y baños necesitas limpiar?"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              />
+            </div>
+
+            {/* Niveles (tiers) */}
+            <p className="text-sm font-semibold text-gray-700 mb-2">Niveles (ej. Básica / Avanzada)</p>
+            <div className="space-y-2 mb-3">
+              {form.config.tiers.map((t, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <input
+                    type="text"
+                    value={t.label}
+                    onChange={(e) => updateTier(i, { label: e.target.value })}
+                    placeholder="Nombre del nivel"
+                    className="flex-1 px-2 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    value={t.price}
+                    onChange={(e) => updateTier(i, { price: e.target.value })}
+                    placeholder="Precio $"
+                    className="w-28 px-2 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeTier(i)}
+                    className="px-2 text-red-500 hover:bg-red-50 rounded"
+                    title="Quitar nivel"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addTier}
+                className="px-3 py-1.5 rounded-md text-sm text-brand-dark font-medium border border-brand/40 hover:bg-brand/10 transition"
+              >
+                + Nivel
+              </button>
+            </div>
+
+            {/* Ítems por cantidad */}
+            <p className="text-sm font-semibold text-gray-700 mb-2">Ítems por cantidad (ej. habitaciones, baños)</p>
+            <div className="space-y-2 mb-3">
+              {form.config.items.map((it, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <input
+                    type="text"
+                    value={it.label}
+                    onChange={(e) => updateItem(i, { label: e.target.value })}
+                    placeholder="Nombre del ítem"
+                    className="flex-1 px-2 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    value={it.price}
+                    onChange={(e) => updateItem(i, { price: e.target.value })}
+                    placeholder="Precio $/unidad"
+                    className="w-32 px-2 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeItem(i)}
+                    className="px-2 text-red-500 hover:bg-red-50 rounded"
+                    title="Quitar ítem"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addItem}
+                className="px-3 py-1.5 rounded-md text-sm text-brand-dark font-medium border border-brand/40 hover:bg-brand/10 transition"
+              >
+                + Ítem
+              </button>
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={saving}
@@ -219,9 +374,18 @@ export default function AdminServices() {
                         </svg>
                       </div>
                       <span className="font-medium text-gray-900">{s.title}</span>
+                      {normConfig(s.config).items.length > 0 && (
+                        <span className="ml-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand/10 text-brand-dark">
+                          con opciones
+                        </span>
+                      )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">${Number(s.price).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {normConfig(s.config).tiers.length > 0
+                      ? 'Desde $' + Math.min(...normConfig(s.config).tiers.map((t) => Number(t.price || 0))).toFixed(2)
+                      : `$${Number(s.price).toFixed(2)}`}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-600">{s.active ? 'Sí' : 'No'}</td>
                   <td className="px-4 py-3">
                     <button
