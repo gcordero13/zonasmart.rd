@@ -7,6 +7,7 @@ import Shop from './pages/store/Shop'
 import ProductDetail from './pages/store/ProductDetail'
 import Cart from './pages/store/Cart'
 import Checkout from './pages/store/Checkout'
+import Cotizador from './pages/store/Cotizador'
 import OrderConfirmation from './pages/store/OrderConfirmation'
 import Tracking from './pages/store/Tracking'
 import MyOrders from './pages/store/MyOrders'
@@ -31,6 +32,7 @@ function App() {
         <Route path="/producto/:id" element={<ProductDetail />} />
         <Route path="/carrito" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/cotizador" element={<Cotizador />} />
         <Route path="/confirmacion" element={<OrderConfirmation />} />
         <Route path="/seguimiento" element={<Tracking />} />
         <Route path="/mis-pedidos" element={<MyOrders />} />

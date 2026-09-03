@@ -129,6 +129,12 @@ export default function Navbar() {
                     Portal vendedor
                   </Link>
                   <Link
+                    to="/cotizador"
+                    className="hidden lg:block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                  >
+                    Cotizador
+                  </Link>
+                  <Link
                     to="/admin"
                     className="hidden lg:block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white transition-colors"
                   >
@@ -179,6 +185,9 @@ export default function Navbar() {
                 </NavLink>
                 <NavLink to="/portal-vendedor" className={mobileLink} onClick={() => setMenuOpen(false)}>
                   Portal vendedor
+                </NavLink>
+                <NavLink to="/cotizador" className={mobileLink} onClick={() => setMenuOpen(false)}>
+                  Cotizador
                 </NavLink>
                 <NavLink to="/admin" className={mobileLink} onClick={() => setMenuOpen(false)}>
                   Panel
