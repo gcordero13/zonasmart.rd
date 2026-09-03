@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../context/StoreContext'
+import { useAuth } from '../context/AuthContext'
 import { fetchProducts } from '../services/products'
+import { fetchSellerByUser } from '../services/sellers'
+import { createQuotation, generateQuotationCode } from '../services/quotations'
+import QuoteDocument from './QuoteDocument'
 
-const WAIT_MS = 500
+const WAIT_MS = 550
 
 function normalize(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -10,144 +14,312 @@ function normalize(s) {
 
 function findProductInList(products, text) {
   const t = normalize(text)
+  if (!t) return null
   return products.find((p) => normalize(p.name).split(/\s+/).some((w) => w.length > 3 && t.includes(w)))
 }
 
-function describeTotals(match, qty, wantInstall) {
-  const price = Number(match.price || 0)
-  const stock = Number(match.stock || 0)
-  if (qty < 1) qty = 1
-  if (stock <= 0) return `El ${match.name} está agotado por el momento.`
-  const limited = qty > stock
-  const useQty = Math.min(qty, stock)
-  let total = price * useQty
-  let msg = `El ${match.name} cuesta $${price.toFixed(2)} por unidad.\n`
-  let instal = 0
-  if (wantInstall && match.requires_installation) {
-    instal = Number(match.installation_price || 0)
-    total += instal
-    msg += `Incluye instalación (+$${instal.toFixed(2)}).\n`
-  } else if (wantInstall && !match.requires_installation) {
-    msg += `Nota: este equipo no tiene instalación disponible.\n`
-  }
-  msg += `Por ${useQty} unidad(es): $${(price * useQty).toFixed(2)}`
-  if (instal) msg += ` + $${instal.toFixed(2)} de instalación`
-  msg += `.\nTotal: $${total.toFixed(2)}.`
-  if (limited) {
-    msg += `\nSolo tenemos ${stock} disponible(s). Si necesitas más, te paso con un agente de soporte.`
-  } else if (useQty > 1) {
-    msg += `\n¿Te hago una cotización formal? Usa el Cotizador para descargarla o dime y te asesoro.`
-  }
-  return msg
+function orderToItems(order) {
+  return Object.values(order).map(({ product, qty, installation }) => ({
+    id: product.id,
+    name: product.name,
+    price: Number(product.price || 0),
+    install_price: Number(product.installation_price || 0),
+    installation: !!installation,
+    qty,
+    image_url: product.image_url || null,
+  }))
 }
 
-function buildBotReply(rawUser, products, lastProductName) {
+function orderTotals(order) {
+  const items = orderToItems(order)
+  const subtotal = items.reduce(
+    (s, i) => s + (i.price + (i.installation ? i.install_price : 0)) * i.qty,
+    0
+  )
+  return { items, subtotal }
+}
+
+function orderSummary(order) {
+  const { items, subtotal } = orderTotals(order)
+  const lines = items.map(
+    (i) =>
+      `• ${i.qty} x ${i.name} — $${(i.price * i.qty).toFixed(2)}` +
+      (i.installation ? ` (incl. instalación +$${(i.install_price * i.qty).toFixed(2)})` : '')
+  )
+  return {
+    text: lines.length
+      ? `Tu pedido actual:\n\n${lines.join('\n')}\n\nSubtotal: $${subtotal.toFixed(2)}\n\nEscribe "cotización a nombre de [tu nombre]" para darte el PDF, o agrega/quita equipos.`
+      : 'Tu pedido está vacío. Dime qué equipo quieres (ej. "2 cámaras con instalación").',
+  }
+}
+
+const QUICK_REPLIES = ['Existencias', 'Ver mi pedido', 'Cotización a nombre de', 'Soporte']
+
+function buildBotReply(rawUser, ctx) {
+  const { products, order } = ctx
   const text = normalize(rawUser)
+  let myOrder = order
 
+  // Saludos
   if (/hola|buenas|saludos|hey|hi/.test(text)) {
-    return (
-      'Hola! Soy el asistente de ZonaSmart 🙂\n\nPuedo ayudarte con:\n• Consultar equipos en existencia\n• Calcular cuánto saldría una cantidad de equipos\n• Cotizaciones con instalación\n• Pasarte con un agente de soporte'
-    )
+    return {
+      reply:
+        'Hola! Soy el asistente de ZonaSmart 🙂\n\nPuedo ayudarte a:\n• Armar un pedido (ej. "2 cámaras con instalación")\n• Consultar existencias y precios\n• Darte una cotización en PDF\n\nEmpecemos: ¿qué equipo te interesa?',
+    }
   }
 
-  if (/existencias|disponible|en stock|tienen en|inventario|equipos/.test(text)) {
-    return buildCatalogReplies(products)
+  // Catálogo / existencias
+  if (/existencias|disponible|en stock|inventario|todas|lista|equipos/.test(text)) {
+    return { reply: buildCatalogReplies(products) }
   }
 
+  // Ver pedido / carrito / resumen
+  if (/carrito|pedido|resumen|mi orden|ver lo que/.test(text)) {
+    return { reply: orderSummary(myOrder).text }
+  }
+
+  // Quitar producto del pedido
+  const removeMatch = text.match(/quitar|quita|elimina|quitar del pedido|sacar/)
+  if (removeMatch) {
+    const target = findProductInList(products, text)
+    if (target && myOrder[target.id]) {
+      const rest = { ...myOrder }
+      delete rest[target.id]
+      myOrder = rest
+      return {
+        reply: `Listo, quité ${target.name} de tu pedido. ${orderSummary(myOrder).text}`,
+        order: myOrder,
+      }
+    }
+  }
+
+  const wantInstallText = /con instalac|con puesta|instalar|instalacion/.test(text)
+  const wantNoInstall = /sin instalac|sin puesta|sin instalar/.test(text)
   const qtyMatch = text.match(/(\d+)/)
-  const wantInstall = /instalac|instalar|puesta/.test(text)
-  const wantQuote = /cotiz|costo|cuesta|cuanto|cuanto saldria|precio/.test(text)
+  const anyProduct = findProductInList(products, text)
 
-  let match = findProductInList(products, text)
+  // Soporte debe evaluarse después de productos
+  if (/soporte|agente|humano|persona|asesor|hablar con/.test(text) && !anyProduct) {
+    return {
+      reply:
+        'Con gusto te paso con un agente de soporte. Usa los botones de WhatsApp o Correo de abajo y atenderemos tu consulta lo antes posible.',
+      lastProductName: null,
+    }
+  }
 
-  // Si no mencionó un equipo por nombre pero habló de una cantidad,
-  // recordamos el último equipo mencionado en la conversación.
-  if (!match && qtyMatch && lastProductName) {
-    match = products.find((p) => normalize(p.name) === normalize(lastProductName)) || null
+  // Agregar / actualizar pedido
+  let match = anyProduct
+  if (!match && qtyMatch && ctx.lastProductName) {
+    match = products.find((p) => normalize(p.name) === normalize(ctx.lastProductName)) || null
   }
 
   if (match) {
+    const id = match.id
     const stock = Number(match.stock || 0)
+    const current = myOrder[id] ? myOrder[id].qty : 0
+    const installation = wantNoInstall ? false : wantInstallText ? true : myOrder[id]?.installation ?? (Number(match.installation_price || 0) > 0)
+    const unitPrice = Number(match.price || 0)
+    const instPrice = Number(match.installation_price || 0)
+
+    // ¿Es una adición ("agregale otra") o un valor exacto ("necesito solo 1")?
+    const isAdditive = /otra|agrega|a[ñn]ade|agregar|mas\b|mas de/.test(text)
+    let newQty
     if (qtyMatch) {
-      const qty = parseInt(qtyMatch[1], 10)
-      return describeTotals(match, qty, wantInstall)
+      const wanted = parseInt(qtyMatch[1], 10)
+      newQty = isAdditive && myOrder[id] ? current + wanted : wanted
+    } else if (isAdditive && myOrder[id]) {
+      newQty = current + 1
+    } else {
+      newQty = current || 1
     }
-    return stock > 0
-      ? `El ${match.name} está en existencia. Tenemos ${stock} disponible(s) y su precio es $${Number(match.price).toFixed(2)}.`
-      : `El ${match.name} está agotado por el momento.`
+
+    // Cap al stock
+    const limited = stock > 0 && newQty > stock
+    if (limited) newQty = stock
+
+    myOrder = {
+      ...myOrder,
+      [id]: { product: match, qty: newQty, installation: installation && instPrice > 0 },
+    }
+
+    const entry = myOrder[id]
+    const line = unitPrice * entry.qty
+    const inst = entry.installation ? instPrice * entry.qty : 0
+    let reply = `${entry.qty} x ${match.name}\nPrecio: $${(unitPrice * entry.qty).toFixed(2)}`
+    if (entry.installation) reply += `\nInstalación: +$${inst.toFixed(2)} ($${instPrice.toFixed(2)}/unidad)`
+    reply += `\nSubtotal de este equipo: $${(line + inst).toFixed(2)}`
+    if (limited) {
+      reply += `\n\nSolo tenemos ${stock} disponible(s) y ya los agregué. Si necesitas más, te paso con un agente.`
+    }
+    const total = orderTotals(myOrder).subtotal
+    reply += `\n\nTu pedido hasta ahora: $${total.toFixed(2)}.`
+    reply += `\n\nPuedo agregar otro equipo, darte la cotización en PDF (ej. "cotización a nombre de Juan") o pasarte con soporte.`
+
+    return { reply, order: myOrder, lastProductName: match.name }
   }
 
-  if (/soporte|agente|humano|persona|asesor|ayuda|contacto/.test(text)) {
-    return 'Con gusto te paso con un agente de soporte. Usa los botones de abajo para WhatsApp o correo y atenderemos tu consulta lo antes posible.'
+  // Solicitud de cotización / PDF / finalizar
+  const wantQuote = /cotizacion|cotiza|pdf|finalizar|total final|cierra mi pedido|dame el pedido/.test(text)
+  if (wantQuote) {
+    if (Object.keys(myOrder).length === 0) {
+      return {
+        reply:
+          'Aún no tienes equipos en tu pedido. Dime el equipo y la cantidad, por ejemplo "2 cámaras con instalación", y te genero la cotización.',
+      }
+    }
+    const nameMatch = rawUser.match(/a nombre de\s+([^,.]+)/i) || rawUser.match(/nombre\s+([^,.]+)/i)
+    const customerName = nameMatch ? nameMatch[1].trim() : 'Cliente'
+    return {
+      reply: `Perfecto, genero tu cotización a nombre de ${customerName}.`,
+      order: myOrder,
+      lastProductName: ctx.lastProductName,
+      quote: { customerName },
+    }
   }
 
-  return wantQuote
-    ? 'Para calcular un total dime el equipo y la cantidad. Por ejemplo: "3 cámaras" o "cuánto saldrían 4 cámaras".'
-    : 'Hola! ¿En qué puedo ayudarte?\n\n• Escribe el nombre de un equipo para saber si está en existencia.\n• Escribe una cantidad y el equipo para calcular (ej. "4 cámaras").\n• Escribe "existencias" para ver todos los productos disponibles.\n• Escribe "soporte" para hablar con un agente.'
+  // Fallback
+  return {
+    reply:
+      'Puedo ayudarte a armar tu pedido. Prueba con:\n• "Existencias" para ver el inventario.\n• "2 cámaras con instalación" para agregar al pedido.\n• "Cotización a nombre de Pedro" para el PDF.\n• "Ver mi pedido" para el resumen.\n• "Soporte" para hablar con un agente.',
+  }
 }
 
 function buildCatalogReplies(products) {
-  const available = products.filter((p) => p.stock > 0)
+  const available = products.filter((p) => Number(p.stock || 0) > 0)
   const lines = available.map((p) => `${p.name} — $${Number(p.price).toFixed(2)}`)
   return lines.length
-    ? `Estos son los equipos disponibles en existencia:\n\n${lines.join('\n')}`
+    ? `Estos son los equipos disponibles:\n\n${lines.join('\n')}\n\n¿Cuál te interesa? Dime una cantidad (ej. "2 cámaras") y lo agrego a tu pedido.`
     : 'Actualmente no hay equipos en existencia. Pronto reponemos inventario.'
 }
 
 export default function SupportChat() {
   const { settings } = useStore()
+  const { user } = useAuth() || {}
+  const storeName = settings.store_name || 'ZonaSmart'
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
   const [products, setProducts] = useState([])
   const [lastProductName, setLastProductName] = useState(null)
+  const [order, setOrder] = useState({})
+  const [previewQuote, setPreviewQuote] = useState(null)
   const bottomRef = useRef(null)
 
   useEffect(() => {
     fetchProducts()
-      .then((all) => setProducts(all))
+      .then(setProducts)
       .catch(() => {})
   }, [])
 
   useEffect(() => {
     if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, typing, open])
+  }, [messages, typing, open, previewQuote])
 
   useEffect(() => {
     if (open && messages.length === 0) {
       setMessages([
         {
           from: 'bot',
-          text: 'Hola! 👋 Soy el asistente de ZonaSmart.\nPregúntame si un equipo está en existencia o escribe "existencias" para ver todos.',
+          text:
+            `Hola! 👋 Soy el asistente de ${storeName}.\n` +
+            'Dime qué equipo necesitas (ej. "2 cámaras con instalación") y armo tu pedido. Escribe "existencias" para ver todo lo disponible.',
         },
       ])
     }
-  }, [open, messages.length])
+  }, [open, messages.length, storeName])
 
-  const sendBot = (text) => {
-    setTyping(true)
-    setMessages((m) => [...m, { from: 'user', text }])
+  const pushBot = (text) => setMessages((m) => [...m, { from: 'bot', text }])
+  const pushUser = (text) => setMessages((m) => [...m, { from: 'user', text }])
+
+  const finalizeQuote = async (customerName, orderRef) => {
+    const { items, subtotal } = orderTotals(orderRef)
+    let seller = null
+    if (user?.id) {
+      seller = await fetchSellerByUser(user.id, user.email).catch(() => null)
+    }
+    const quote = {
+      seller_id: seller?.id || null,
+      customer_name: customerName || 'Cliente',
+      customer_email: null,
+      customer_whatsapp: null,
+      notes: 'Cotización generada desde el chat de soporte.',
+      items,
+      cover_images: [],
+      subtotal,
+      shipping: 0,
+      discount: 0,
+      total: subtotal,
+      status: 'pending',
+      quotation_code: generateQuotationCode(),
+    }
+    const created = await createQuotation(quote)
+    return created
+  }
+
+  const sendBot = async (raw) => {
+    const text = raw.trim()
+    if (!text) return
+    pushUser(text)
     setInput('')
-    setTimeout(() => {
-      const found = findProductInList(products, text)
-      const reply = buildBotReply(text, products, lastProductName)
-      if (found) {
-        setLastProductName(found.name)
-      } else if (/soporte|agente|humano|persona|asesor/.test(normalize(text))) {
+    setTyping(true)
+    await new Promise((r) => setTimeout(r, WAIT_MS + Math.random() * 400))
+
+    let result
+    try {
+      result = buildBotReply(text, { products, order, lastProductName })
+    } catch {
+      result = { reply: 'Ups, algo salió mal. Intenta de nuevo o escríbele a un agente.' }
+    }
+
+    if (result.order) setOrder(result.order)
+    if (result.lastProductName !== undefined) setLastProductName(result.lastProductName)
+
+    if (result.quote) {
+      try {
+        const created = await finalizeQuote(result.quote.customerName, result.order)
+        setOrder({})
         setLastProductName(null)
+        setMessages((m) => [
+          ...m,
+          {
+            from: 'bot',
+            text:
+              `✅ Cotización Creada (${created.quotation_code}) a nombre de ${created.customer_name}.\n` +
+              `Items: ${created.items.length} · Total: $${Number(created.total).toFixed(2)}.\n\nPuedes verla e imprimirla en la ventana que se abre.`,
+          },
+        ])
+        setPreviewQuote(created)
+      } catch (e) {
+        setMessages((m) => [
+          ...m,
+          { from: 'bot', text: `Hubo un error al guardar tu cotización (${e.message}). Escríbele a un agente para ayudarte.` },
+        ])
       }
-      setMessages((m) => [...m, { from: 'bot', text: reply }])
-      setTyping(false)
-    }, WAIT_MS + Math.random() * 500)
+    } else {
+      pushBot(result.reply)
+    }
+    setTyping(false)
+  }
+
+  const handleQuick = (q) => {
+    if (q === 'Existencias') return sendBot('existencias')
+    if (q === 'Ver mi pedido') return sendBot('ver mi pedido')
+    if (q === 'Soporte') return sendBot('soporte')
+    if (q === 'Cotización a nombre de') return sendBot('cotización a nombre de Cliente')
   }
 
   const waLink = settings.whatsapp
-    ? `https://wa.me/${settings.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent('Hola, necesito ayuda en ZonaSmart.')}`
+    ? `https://wa.me/${settings.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola, necesito ayuda en ${storeName}.`)}`
     : '#'
   const mailLink = settings.email
-    ? `mailto:${settings.email}?subject=${encodeURIComponent('Consulta en ZonaSmart')}`
+    ? `mailto:${settings.email}?subject=${encodeURIComponent(`Consulta en ${storeName}`)}`
     : '#'
+
+  const printQuote = () => {
+    if (!previewQuote) return
+    setTimeout(() => window.print(), 80)
+  }
 
   return (
     <>
@@ -173,13 +345,49 @@ export default function SupportChat() {
         )}
       </button>
 
+      {/* Vista previa de cotización (PDF imprimible) */}
+      {previewQuote && (
+        <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/60 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-3xl mt-8 mb-8 shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h3 className="font-bold text-gray-900">
+                Cotización {previewQuote.quotation_code}
+              </h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={printQuote}
+                  className="px-4 py-2 rounded-lg gradient-brand text-white text-sm font-semibold hover:brightness-110 transition flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  Imprimir / Guardar PDF
+                </button>
+                <button
+                  onClick={() => setPreviewQuote(null)}
+                  className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+                  title="Cerrar"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="px-6 py-6">
+              <QuoteDocument quote={previewQuote} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Panel */}
       {open && (
         <div className="fixed bottom-20 right-5 z-50 w-[calc(100vw-2.5rem)] max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="gradient-brand px-4 py-3 text-white">
-            <p className="font-semibold">Soporte ZonaSmart</p>
-            <p className="text-xs text-white/80">Agente de soporte + asistente de existencias</p>
+            <p className="font-semibold">Soporte {storeName}</p>
+            <p className="text-xs text-white/80">Asistente de pedidos + agente</p>
           </div>
 
           {/* Mensajes */}
@@ -199,11 +407,27 @@ export default function SupportChat() {
             ))}
             {typing && (
               <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-400">
-                  Escribiendo...
+                <div className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-400 flex items-center gap-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" />
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:0.15s]" />
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:0.3s]" />
                 </div>
               </div>
             )}
+
+            {/* Quick replies */}
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {QUICK_REPLIES.map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => handleQuick(q)}
+                  className="px-2.5 py-1 rounded-full border border-brand/40 text-brand-dark text-[11px] font-medium hover:bg-brand/10 transition"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
             <div ref={bottomRef} />
           </div>
 
@@ -262,6 +486,17 @@ export default function SupportChat() {
           </div>
         </div>
       )}
+
+      {/* Estilos de impresión */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #quote-print-area, #quote-print-area * { visibility: visible; }
+          #quote-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+          #quote-print-area { box-shadow: none !important; }
+          #quote-print-area { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+      `}</style>
     </>
   )
 }
