@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { createOrder, generateTrackingCode } from '../../services/orders'
 import { resolveSellerByCode, recordCommission } from '../../services/sellers'
 import { decrementProductStock } from '../../services/products'
+import { estimateLocation } from '../../services/geo'
 
 export default function Checkout() {
   const { items, totalPrice, totalItems, clearCart } = useCart()
@@ -12,7 +13,9 @@ export default function Checkout() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
+  const [locating, setLocating] = useState(false)
   const [error, setError] = useState(null)
+  const [locInfo, setLocInfo] = useState(null)
   const [refCode, setRefCode] = useState(() => localStorage.getItem('zs_ref') || '')
   const [form, setForm] = useState({
     name: '',
@@ -21,6 +24,20 @@ export default function Checkout() {
     city: '',
     zip: '',
   })
+
+  const detectLocation = async () => {
+    setLocating(true)
+    setError(null)
+    try {
+      const loc = await estimateLocation()
+      setLocInfo(loc)
+      setForm((f) => ({ ...f, city: loc.city || f.city }))
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLocating(false)
+    }
+  }
 
   useEffect(() => {
     const ref = searchParams.get('ref')
@@ -34,6 +51,16 @@ export default function Checkout() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
+  const zoneShipping = (item) => {
+  const zones = item.shipping_zones || {}
+  const cityKey = (form.city || '').trim().toLowerCase()
+  if (cityKey && zones) {
+    const matched = Object.keys(zones).find((k) => k.toLowerCase() === cityKey)
+    if (matched !== undefined) return Number(zones[matched])
+  }
+  return Number(item.shipping_price || 0)
+}
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!user) {
@@ -44,7 +71,7 @@ export default function Checkout() {
     setLoading(true)
     setError(null)
     try {
-      const shipping = items.reduce((acc, i) => acc + Number(i.shipping_price || 0) * i.quantity, 0)
+      const shipping = items.reduce((acc, i) => acc + zoneShipping(i) * i.quantity, 0)
       const order = {
         user_id: user.id,
         email: form.email,
@@ -111,7 +138,7 @@ export default function Checkout() {
     )
   }
 
-  const shipping = items.reduce((acc, i) => acc + Number(i.shipping_price || 0) * i.quantity, 0)
+  const shipping = items.reduce((acc, i) => acc + zoneShipping(i) * i.quantity, 0)
   const grandTotal = totalPrice + shipping
 
   return (
@@ -126,6 +153,27 @@ export default function Checkout() {
         )}
 
         <h2 className="text-lg font-bold text-gray-900 mb-4">Datos de envío</h2>
+        <button
+          type="button"
+          onClick={detectLocation}
+          disabled={locating}
+          className="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded-md border border-brand/40 text-sm font-medium text-brand-dark hover:bg-brand/10 disabled:opacity-50 transition-colors"
+        >
+          {locating ? (
+            <span className="inline-block w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c4.97 0 9 4.03 9 9 0 6.21-7.03 10.35-8.5 11-.37.16-.63.49-.63.87 0 .36.28.63.63.63H6a2 2 0 01-2-2V5a2 2 0 012-2h6zm4 7H8m8 0H8" />
+            </svg>
+          )}
+          {locating ? 'Detectando ubicación...' : 'Detectar mi ubicación'}
+        </button>
+        {locInfo && form.city && (
+          <p className="text-xs text-gray-500 mb-4">
+            Ubicación detectada: {locInfo.city || '—'}
+            {locInfo.province ? `, ${locInfo.province}` : ''}. Puedes editarla abajo.
+          </p>
+        )}
         <div className="grid sm:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>

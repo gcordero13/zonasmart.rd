@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { fetchProducts } from '../../services/products'
 import ProductCard from '../../components/ProductCard'
 import ReviewsSection from '../../components/ReviewsSection'
+import ServicesSection from '../../components/ServicesSection'
 import Reveal from '../../components/Reveal'
 import { useStore } from '../../context/StoreContext'
 
@@ -213,6 +214,8 @@ export default function Home() {
           </>
         )}
       </section>
+
+      <ServicesSection />
 
       <section className="gradient-brand py-14">
         <Reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center" variant="reveal-zoom">

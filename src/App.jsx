@@ -20,6 +20,7 @@ import AdminCustomers from './pages/admin/AdminCustomers'
 import AdminReviews from './pages/admin/AdminReviews'
 import AdminSellers from './pages/admin/AdminSellers'
 import AdminSettings from './pages/admin/AdminSettings'
+import AdminServices from './pages/admin/AdminServices'
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
         <Route path="clientes" element={<AdminCustomers />} />
         <Route path="vendedores" element={<AdminSellers />} />
         <Route path="configuracion" element={<AdminSettings />} />
+        <Route path="servicios" element={<AdminServices />} />
         <Route path="*" element={<Dashboard />} />
       </Route>
     </Routes>

@@ -18,7 +18,29 @@ const emptyForm = {
   low_stock_threshold: '',
   shipping_price: '',
   shipping_type: 'standard',
+  requires_installation: false,
+  installation_price: '',
+  shipping_zones: '',
 }
+
+const parseShippingZones = (text) => {
+  const zones = {}
+  if (!text) return zones
+  text.split('\n').forEach((line) => {
+    const idx = line.indexOf('=')
+    if (idx > -1) {
+      const key = line.slice(0, idx).trim()
+      const val = parseFloat(line.slice(idx + 1).trim())
+      if (key && !isNaN(val)) zones[key] = val
+    }
+  })
+  return zones
+}
+
+const stringifyShippingZones = (obj) =>
+  Object.entries(obj || {})
+    .map(([k, v]) => `${k}=${v}`)
+    .join('\n')
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([])
@@ -72,6 +94,9 @@ export default function AdminProducts() {
         low_stock_threshold: form.low_stock_threshold ? Number(form.low_stock_threshold) : 5,
         shipping_price: form.shipping_price ? Number(form.shipping_price) : 0,
         shipping_type: form.shipping_type,
+        requires_installation: !!form.requires_installation,
+        installation_price: form.installation_price ? Number(form.installation_price) : 0,
+        shipping_zones: parseShippingZones(form.shipping_zones),
       }
 
       if (imageFile) {
@@ -113,6 +138,9 @@ export default function AdminProducts() {
       low_stock_threshold: product.low_stock_threshold ?? '',
       shipping_price: product.shipping_price ?? '',
       shipping_type: product.shipping_type || 'standard',
+      requires_installation: !!product.requires_installation,
+      installation_price: product.installation_price ?? '',
+      shipping_zones: stringifyShippingZones(product.shipping_zones),
     })
     setShowForm(true)
   }
@@ -316,6 +344,52 @@ export default function AdminProducts() {
                 <option value="pickup">Recogida en tienda</option>
               </select>
             </div>
+            <div className="sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio de envío por zona</label>
+              <textarea
+                name="shipping_zones"
+                value={form.shipping_zones}
+                onChange={handleChange}
+                rows="3"
+                placeholder="Santo Domingo=200&#10;Santiago=300&#10;La Altagracia=350"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand font-mono text-sm"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Escribe una zona por línea con formato <code className="font-mono">Zona=precio</code>. Si una
+                zona no aparece, se usa el precio de envío base.
+              </p>
+            </div>
+            <div className="sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700">
+                <span className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="requires_installation"
+                    checked={form.requires_installation}
+                    onChange={(e) => setForm({ ...form, requires_installation: e.target.checked })}
+                    className="w-4 h-4 accent-brand"
+                  />
+                  Este producto requiere instalación
+                </span>
+              </label>
+            </div>
+            {form.requires_installation && (
+              <div className="sm:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Precio de instalación ($)
+                </label>
+                <input
+                  type="number"
+                  name="installation_price"
+                  value={form.installation_price}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  className="w-40 px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
+                />
+              </div>
+            )}
             <div className="sm:col-span-3">
               <label className="block text-sm font-medium text-gray-700 mb-1">Detalles importantes del producto</label>
               <textarea
