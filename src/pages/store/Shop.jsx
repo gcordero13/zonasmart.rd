@@ -47,23 +47,29 @@ export default function Shop() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Tienda</h1>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Buscar productos..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
-          />
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-8 md:p-10 mb-8 animate-fade-in">
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Tienda</h1>
+        <p className="text-gray-300 mb-6">
+          Encuentra la tecnología perfecta para tu hogar inteligente
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+            <input
+              type="text"
+              placeholder="Buscar productos..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-700 bg-gray-700/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="px-4 py-3 rounded-xl border border-gray-700 bg-gray-700/50 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
             {categories.map((c) => (
-              <option key={c} value={c}>
+              <option key={c} value={c} className="text-gray-900">
                 {c === 'all' ? 'Todas las categorías' : c}
               </option>
             ))}
