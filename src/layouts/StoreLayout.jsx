@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import SupportChat from '../components/SupportChat'
 
 function RefCapture() {
   const [searchParams] = useSearchParams()
@@ -23,6 +24,7 @@ export default function StoreLayout() {
         <Outlet />
       </main>
       <Footer />
+      <SupportChat />
     </div>
   )
 }

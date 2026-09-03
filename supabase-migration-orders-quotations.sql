@@ -8,6 +8,7 @@
 alter table public.orders add column if not exists address text;
 alter table public.orders add column if not exists city text;
 alter table public.orders add column if not exists zip text;
+alter table public.orders add column if not exists whatsapp text;
 alter table public.orders add column if not exists subtotal numeric;
 alter table public.orders add column if not exists shipping numeric;
 alter table public.orders add column if not exists lat double precision;

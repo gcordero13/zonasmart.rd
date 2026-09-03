@@ -1,15 +1,12 @@
-import { useEffect, useState, lazy, Suspense } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { createOrder, generateTrackingCode } from '../../services/orders'
 import { resolveSellerByCode, recordCommission } from '../../services/sellers'
 import { decrementProductStock } from '../../services/products'
-import { estimateLocation } from '../../services/geo'
 import { sendOrderNotification } from '../../services/emails'
 import { useStore } from '../../context/StoreContext'
-
-const MapPicker = lazy(() => import('../../components/MapPicker'))
 
 export default function Checkout() {
   const { items, totalPrice, totalItems, clearCart } = useCart()
@@ -18,33 +15,15 @@ export default function Checkout() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
-  const [locating, setLocating] = useState(false)
   const [error, setError] = useState(null)
-  const [locInfo, setLocInfo] = useState(null)
   const [refCode, setRefCode] = useState(() => localStorage.getItem('zs_ref') || '')
   const [form, setForm] = useState({
     name: '',
     email: user?.email || '',
+    whatsapp: '',
     address: '',
     city: '',
-    zip: '',
   })
-  const [latLng, setLatLng] = useState(null)
-
-  const detectLocation = async () => {
-    setLocating(true)
-    setError(null)
-    try {
-      const loc = await estimateLocation()
-      setLocInfo(loc)
-      setLatLng({ lat: loc.latitude, lng: loc.longitude })
-      setForm((f) => ({ ...f, city: loc.city || f.city }))
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setLocating(false)
-    }
-  }
 
   useEffect(() => {
     const ref = searchParams.get('ref')
@@ -82,11 +61,11 @@ export default function Checkout() {
       const order = {
         user_id: user.id,
         email: form.email,
+        whatsapp: form.whatsapp || null,
         customer_name: form.name,
         tracking_code: generateTrackingCode(),
         address: form.address,
         city: form.city,
-        zip: form.zip,
         items: items.map(({ id, name, price, quantity, image_url, delivery_days, shipping_price }) => ({
           id,
           name,
@@ -99,8 +78,6 @@ export default function Checkout() {
         subtotal: totalPrice,
         shipping,
         total: totalPrice + shipping,
-        lat: latLng?.lat ?? null,
-        lng: latLng?.lng ?? null,
         status: 'pending',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -175,45 +152,6 @@ export default function Checkout() {
         )}
 
         <h2 className="text-lg font-bold text-gray-900 mb-4">Datos de envío</h2>
-        <button
-          type="button"
-          onClick={detectLocation}
-          disabled={locating}
-          className="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded-md border border-brand/40 text-sm font-medium text-brand-dark hover:bg-brand/10 disabled:opacity-50 transition-colors"
-        >
-          {locating ? (
-            <span className="inline-block w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c4.97 0 9 4.03 9 9 0 6.21-7.03 10.35-8.5 11-.37.16-.63.49-.63.87 0 .36.28.63.63.63H6a2 2 0 01-2-2V5a2 2 0 012-2h6zm4 7H8m8 0H8" />
-            </svg>
-          )}
-          {locating ? 'Detectando ubicación...' : 'Detectar mi ubicación'}
-        </button>
-        {locInfo && form.city && (
-          <p className="text-xs text-gray-500 mb-4">
-            Ubicación detectada: {locInfo.city || '—'}
-            {locInfo.province ? `, ${locInfo.province}` : ''}. Puedes editarla abajo.
-          </p>
-        )}
-        <div className="mb-6">
-          <p className="text-sm font-medium text-gray-700 mb-2">Selecciona tu ubicación en el mapa</p>
-          <Suspense
-            fallback={
-              <div className="rounded-xl border border-gray-200 h-64 flex items-center justify-center text-sm text-gray-400">
-                Cargando mapa...
-              </div>
-            }
-          >
-            <MapPicker
-              value={latLng}
-              onChange={(loc) => {
-                setLatLng({ lat: loc.lat, lng: loc.lng })
-                if (loc.city) setForm((f) => ({ ...f, city: loc.city }))
-              }}
-            />
-          </Suspense>
-        </div>
         <div className="grid sm:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
@@ -261,13 +199,13 @@ export default function Checkout() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Código postal</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp de contacto</label>
             <input
-              type="text"
-              name="zip"
-              value={form.zip}
+              type="tel"
+              name="whatsapp"
+              value={form.whatsapp}
               onChange={handleChange}
-              required
+              placeholder="+1 809-000-0000"
               className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
             />
           </div>
