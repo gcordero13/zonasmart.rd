@@ -1,31 +1,78 @@
-import { useEffect, useRef } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 
-export default function Reveal({ children, className = '', as: Tag = 'div', delay = 0, variant = '' }) {
-  const ref = useRef(null)
+const variants = {
+  fadeUp: {
+    hidden: { opacity: 0, y: 28 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.55, delay: i * 0.08, ease: [0.21, 0.47, 0.32, 0.98] },
+    }),
+  },
+  fadeIn: {
+    hidden: { opacity: 0 },
+    visible: (i) => ({
+      opacity: 1,
+      transition: { duration: 0.6, delay: i * 0.08, ease: 'easeOut' },
+    }),
+  },
+  zoom: {
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: (i) => ({
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.5, delay: i * 0.08, ease: [0.21, 0.47, 0.32, 0.98] },
+    }),
+  },
+  slideLeft: {
+    hidden: { opacity: 0, x: 40 },
+    visible: (i) => ({
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.55, delay: i * 0.08, ease: [0.21, 0.47, 0.32, 0.98] },
+    }),
+  },
+  slideRight: {
+    hidden: { opacity: 0, x: -40 },
+    visible: (i) => ({
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.55, delay: i * 0.08, ease: [0.21, 0.47, 0.32, 0.98] },
+    }),
+  },
+}
 
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            el.classList.add('is-visible')
-            observer.unobserve(el)
-          }
-        })
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
+const variantMap = {
+  '': 'fadeUp',
+  'reveal-zoom': 'zoom',
+  'reveal-fade': 'fadeIn',
+  'reveal-left': 'slideLeft',
+  'reveal-right': 'slideRight',
+  'reveal-up': 'fadeUp',
+}
 
-  const style = delay ? { transitionDelay: `${delay}ms` } : undefined
+export default function Reveal({
+  children,
+  className = '',
+  as: Tag = 'div',
+  delay = 0,
+  variant = '',
+}) {
+  const preferredReduce = useReducedMotion()
+  const mode = variantMap[variant] || 'fadeUp'
+  const preset = variants[mode]
+  const MotionTag = motion[Tag] || motion.div
 
   return (
-    <Tag ref={ref} className={`reveal ${variant} ${className}`} style={style}>
+    <MotionTag
+      className={className}
+      initial={preferredReduce ? false : 'hidden'}
+      whileInView={preferredReduce ? undefined : 'visible'}
+      viewport={{ once: true, margin: '0px 0px -60px 0px' }}
+      variants={preferredReduce ? undefined : preset}
+      custom={delay}
+    >
       {children}
-    </Tag>
+    </MotionTag>
   )
 }

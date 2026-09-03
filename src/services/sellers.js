@@ -65,6 +65,11 @@ export const suspendSeller = async (id) => {
   return data
 }
 
+export const deleteSeller = async (id) => {
+  const { error } = await supabase.from('sellers').delete().eq('id', id)
+  if (error) throw error
+}
+
 export const getSellerStats = async (sellerId) => {
   const { data, error } = await supabase
     .from('commissions')

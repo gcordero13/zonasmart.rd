@@ -4,6 +4,7 @@ import {
   updateSeller,
   approveSeller,
   suspendSeller,
+  deleteSeller,
   createSeller,
   fetchAllCommissions,
   markCommissionPaid,
@@ -248,7 +249,7 @@ export default function AdminSellers() {
                       <span className="text-gray-500">%</span>
                     </td>
                     <td className="px-4 py-3">{statusBadge(s.status)}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
                       {s.status !== 'active' && (
                         <button
                           onClick={() => approveSeller(s.id, s.commission_rate).then(load)}
@@ -260,11 +261,22 @@ export default function AdminSellers() {
                       {s.status === 'active' && (
                         <button
                           onClick={() => suspendSeller(s.id).then(load)}
-                          className="text-red-600 hover:text-red-700 font-medium"
+                          className="text-amber-600 hover:text-amber-700 font-medium mr-3"
                         >
-                          Suspender
+                          Inactivar
                         </button>
                       )}
+                      <button
+                        onClick={async () => {
+                          if (window.confirm(`¿Borrar al vendedor "${s.name || s.email}"? Esta acción no se puede deshacer.`)) {
+                            await deleteSeller(s.id)
+                            await load()
+                          }
+                        }}
+                        className="text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Borrar
+                      </button>
                     </td>
                   </tr>
                 ))}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { fetchProducts } from '../../services/products'
 import ProductCard from '../../components/ProductCard'
 import ReviewsSection from '../../components/ReviewsSection'
@@ -148,18 +149,52 @@ export default function Home() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 md:py-32 grid md:grid-cols-2 gap-12 items-center">
-          <div className="animate-fade-in-up">
-            <span className="inline-block animate-soft-pulse bg-brand/20 text-brand-light border border-brand/30 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: { transition: { staggerChildren: 0.12 } },
+            }}
+            className="animate-fade-in-up"
+          >
+            <motion.span
+              variants={{
+                hidden: { opacity: 0, y: 16 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+              }}
+              className="inline-block animate-soft-pulse bg-brand/20 text-brand-light border border-brand/30 px-4 py-1.5 rounded-full text-sm font-medium mb-6"
+            >
               Instalación y soporte profesional incluidos
-            </span>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-white mb-6">
+            </motion.span>
+            <motion.h1
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] } },
+              }}
+              className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-white mb-6"
+            >
               {titlePrefix}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-light to-brand-dark">
                 inteligente
               </span>
-            </h1>
-            <p className="text-base sm:text-lg text-gray-300 mb-8 max-w-lg">{hero.subtitle}</p>
-            <div className="flex flex-wrap gap-4">
+            </motion.h1>
+            <motion.p
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay: 0.1, ease: 'easeOut' } },
+              }}
+              className="text-base sm:text-lg text-gray-300 mb-8 max-w-lg"
+            >
+              {hero.subtitle}
+            </motion.p>
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay: 0.2, ease: 'easeOut' } },
+              }}
+              className="flex flex-wrap gap-4"
+            >
               <Link
                 to="/tienda"
                 className="gradient-animated group inline-flex items-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-brand to-brand-dark text-white font-bold hover:scale-[1.03] transition-transform shadow-lg shadow-brand/30"
@@ -175,7 +210,7 @@ export default function Home() {
               >
                 Seguir mi pedido
               </Link>
-            </div>
+            </motion.div>
 
             <div className="mt-10 grid grid-cols-3 gap-6 border-t border-white/10 pt-6 max-w-md">
               <div>
@@ -191,7 +226,7 @@ export default function Home() {
                 <p className="text-xs text-gray-400 mt-0.5">pago seguro</p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           <div className="hidden md:block animate-float-lively">
             <div className="shine-hover relative overflow-hidden bg-gradient-to-br from-brand-light/20 to-brand-dark/20 rounded-3xl p-8 border border-brand/20">

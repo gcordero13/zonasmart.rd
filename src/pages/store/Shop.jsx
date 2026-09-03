@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { fetchProducts, subscribeToProducts } from '../../services/products'
 import ProductCard from '../../components/ProductCard'
 
@@ -47,11 +48,28 @@ export default function Shop() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-8 md:p-10 mb-8 animate-fade-in">
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Tienda</h1>
-        <p className="text-gray-300 mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
+        className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-8 md:p-10 mb-8 shadow-lg"
+      >
+        <motion.h1
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="text-2xl md:text-3xl font-bold text-white mb-2"
+        >
+          Tienda
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-gray-300 mb-6"
+        >
           Encuentra la tecnología perfecta para tu hogar inteligente
-        </p>
+        </motion.p>
         <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
           <div className="relative flex-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
@@ -75,7 +93,7 @@ export default function Shop() {
             ))}
           </select>
         </div>
-      </div>
+      </motion.div>
 
       {loading && <p className="text-gray-500">Cargando productos...</p>}
       {error && <p className="text-red-600">Error: {error}</p>}
@@ -83,13 +101,37 @@ export default function Shop() {
       {!loading && !error && (
         <>
           {filtered.length === 0 ? (
-            <p className="text-gray-500">No se encontraron productos.</p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-gray-500"
+            >
+              No se encontraron productos.
+            </motion.p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filtered.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <motion.div
+              layout
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+            >
+              <AnimatePresence mode="popLayout">
+                {filtered.map((product, i) => (
+                  <motion.div
+                    key={product.id}
+                    layout
+                    initial={{ opacity: 0, y: 30, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{
+                      duration: 0.4,
+                      delay: i * 0.045,
+                      ease: [0.21, 0.47, 0.32, 0.98],
+                    }}
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
         </>
       )}
