@@ -12,7 +12,13 @@ export default function QuoteDocument({ quote, sellerName, coverIndex = 0, onCov
 
   const covers = (quote.cover_images || []).filter(Boolean)
   const activeCover = covers.length ? covers[coverIndex % covers.length] : null
-  const lineTotal = items.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0)
+  const lineTotal = items.reduce(
+    (s, i) =>
+      s +
+      (Number(i.price || 0) + (i.installation ? Number(i.install_price || 0) : 0)) *
+        (i.qty || 1),
+    0
+  )
 
   const statusLabel = {
     pending: 'Pendiente de aprobación',
@@ -90,7 +96,9 @@ export default function QuoteDocument({ quote, sellerName, coverIndex = 0, onCov
             </thead>
             <tbody>
               {items.map((item, idx) => {
-                const price = Number(item.price || 0)
+                const base = Number(item.price || 0)
+                const inst = item.installation ? Number(item.install_price || 0) : 0
+                const price = base + inst
                 const qty = Number(item.qty || 1)
                 return (
                   <tr key={idx} className="border-b border-gray-100">
@@ -99,7 +107,14 @@ export default function QuoteDocument({ quote, sellerName, coverIndex = 0, onCov
                         {item.image_url && (
                           <img src={item.image_url} alt="" className="w-8 h-8 rounded-md object-cover" />
                         )}
-                        {item.name}
+                        <div>
+                          <div className="flex items-center gap-2">{item.name}</div>
+                          {item.installation && (
+                            <span className="text-[10px] text-brand-dark font-medium">
+                              Incluye instalación (+${inst.toFixed(2)})
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="py-2.5 px-3 text-center text-gray-600">{qty}</td>

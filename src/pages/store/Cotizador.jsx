@@ -31,8 +31,10 @@ export default function Cotizador() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [form, setForm] = useState(empty)
+  const [productSearch, setProductSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState([])
   const [qtyMap, setQtyMap] = useState({})
+  const [installMap, setInstallMap] = useState({})
   const [shipping, setShipping] = useState(0)
   const [discount, setDiscount] = useState(0)
   const [status, setStatus] = useState('pending')
@@ -69,10 +71,28 @@ export default function Cotizador() {
   }, [user])
 
   const subtotal = useMemo(
-    () => form.items.reduce((s, i) => s + Number(i.price || 0) * Number(i.qty || 1), 0),
+    () =>
+      form.items.reduce(
+        (s, i) =>
+          s +
+          (Number(i.price || 0) + (i.installation ? Number(i.install_price || 0) : 0)) *
+            Number(i.qty || 1),
+        0
+      ),
     [form.items]
   )
   const total = Math.max(0, subtotal + Number(shipping || 0) - Number(discount || 0))
+
+  const filteredProducts = useMemo(() => {
+    const q = productSearch.trim().toLowerCase()
+    if (!q) return products
+    return products.filter(
+      (p) =>
+        (p.name || '').toLowerCase().includes(q) ||
+        (p.category || '').toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q)
+    )
+  }, [products, productSearch])
 
   const toggleSelect = (id) => {
     setSelectedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]))
@@ -92,17 +112,23 @@ export default function Cotizador() {
       ...f,
       items: [
         ...f.items,
-        ...chosen.map((prod) => ({
-          id: prod.id,
-          name: prod.name,
-          price: Number(prod.price),
-          qty: Number(qtyMap[prod.id] || 1),
-          image_url: prod.image_url || null,
-        })),
+        ...chosen.map((prod) => {
+          const install = !!installMap[prod.id]
+          return {
+            id: prod.id,
+            name: prod.name,
+            price: Number(prod.price),
+            install_price: Number(prod.installation_price || 0),
+            installation: install && Number(prod.installation_price || 0) > 0,
+            qty: Number(qtyMap[prod.id] || 1),
+            image_url: prod.image_url || null,
+          }
+        }),
       ],
     }))
     setSelectedIds([])
     setQtyMap({})
+    setInstallMap({})
     setError(null)
   }
 
@@ -119,6 +145,8 @@ export default function Cotizador() {
           id: item.id,
           name: item.name,
           price: Number(item.price),
+          install_price: Number(item.install_price || 0),
+          installation: !!item.installation,
           qty: Number(item.quantity || 1),
           image_url: item.image_url || null,
         })),
@@ -138,6 +166,19 @@ export default function Cotizador() {
         i === idx ? { ...item, qty: Math.max(1, Number(q) || 1) } : item
       ),
     }))
+  }
+
+  const toggleItemInstall = (idx) => {
+    setForm((f) => ({
+      ...f,
+      items: f.items.map((item, i) =>
+        i === idx ? { ...item, installation: !item.installation } : item
+      ),
+    }))
+  }
+
+  const updateInstallMap = (id, v) => {
+    setInstallMap((m) => ({ ...m, [id]: v }))
   }
 
   const handleCoverUpload = async (e) => {
@@ -199,6 +240,7 @@ export default function Cotizador() {
     setForm(empty)
     setSelectedIds([])
     setQtyMap({})
+    setInstallMap({})
     setShipping(0)
     setDiscount(0)
     setStatus('pending')
@@ -315,39 +357,74 @@ export default function Cotizador() {
                 </button>
               </div>
 
+              <div className="relative mb-2">
+                <svg
+                  className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="Buscar producto..."
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                />
+              </div>
+
               <div className="max-h-64 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
-                {products.map((p) => {
+                {filteredProducts.map((p) => {
                   const checked = selectedIds.includes(p.id)
+                  const canInstall = Number(p.installation_price || 0) > 0
                   return (
-                    <label key={p.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleSelect(p.id)}
-                        className="w-4 h-4 accent-brand shrink-0"
-                      />
-                      {p.image_url && (
-                        <img src={p.image_url} alt="" className="w-10 h-10 rounded-md object-cover bg-gray-100 shrink-0" />
-                      )}
-                      <span className="flex-1 min-w-0">
-                        <span className="block text-sm text-gray-800 truncate">{p.name}</span>
-                        <span className="text-xs text-gray-400">${Number(p.price).toFixed(2)}</span>
-                      </span>
-                      {checked && (
+                    <div key={p.id} className="px-3 py-2.5 hover:bg-gray-50">
+                      <div className="flex items-center gap-3">
                         <input
-                          type="number"
-                          min="1"
-                          value={qtyMap[p.id] || 1}
-                          onChange={(e) => setProductQty(p.id, e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-16 px-2 py-1 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleSelect(p.id)}
+                          className="w-4 h-4 accent-brand shrink-0"
                         />
+                        {p.image_url && (
+                          <img src={p.image_url} alt="" className="w-10 h-10 rounded-md object-cover bg-gray-100 shrink-0" />
+                        )}
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm text-gray-800 truncate">{p.name}</span>
+                          <span className="text-xs text-gray-400">${Number(p.price).toFixed(2)}</span>
+                        </span>
+                        {checked && (
+                          <input
+                            type="number"
+                            min="1"
+                            value={qtyMap[p.id] || 1}
+                            onChange={(e) => setProductQty(p.id, e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-16 px-2 py-1 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                          />
+                        )}
+                      </div>
+                      {checked && canInstall && (
+                        <label className="flex items-center gap-2 mt-1.5 pl-7 text-xs text-gray-500 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!installMap[p.id]}
+                            onChange={(e) => updateInstallMap(p.id, e.target.checked)}
+                            className="w-3.5 h-3.5 accent-brand"
+                          />
+                          Incluir instalación (+${Number(p.installation_price).toFixed(2)})
+                        </label>
                       )}
-                    </label>
+                    </div>
                   )
                 })}
-                {products.length === 0 && (
-                  <p className="text-sm text-gray-400 py-6 text-center">No hay productos disponibles.</p>
+                {filteredProducts.length === 0 && (
+                  <p className="text-sm text-gray-400 py-6 text-center">
+                    {productSearch ? 'Sin resultados para tu búsqueda.' : 'No hay productos disponibles.'}
+                  </p>
                 )}
               </div>
 
@@ -369,35 +446,54 @@ export default function Cotizador() {
                   Productos en la cotización ({form.items.length})
                 </p>
                 <div className="space-y-2">
-                  {form.items.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm">
-                      <div className="min-w-0">
-                        <span className="block text-gray-800 truncate">{item.name}</span>
-                        <span className="text-xs text-gray-400">${Number(item.price).toFixed(2)} c/u</span>
+                  {form.items.map((item, idx) => {
+                    const line = (Number(item.price || 0) + (item.installation ? Number(item.install_price || 0) : 0)) * Number(item.qty || 1)
+                    return (
+                      <div key={idx} className="bg-gray-50 rounded-lg px-3 py-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="min-w-0">
+                            <span className="block text-gray-800 truncate">{item.name}</span>
+                            <span className="text-xs text-gray-400">
+                              ${Number(item.price).toFixed(2)} c/u
+                              {item.installation ? ` + ${Number(item.install_price || 0).toFixed(2)} inst.` : ''}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 ml-3">
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.qty}
+                              onChange={(e) => updateItemQty(idx, e.target.value)}
+                              className="w-16 px-2 py-1 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                            />
+                            <span className="font-semibold text-gray-900 w-20 text-right">
+                              ${line.toFixed(2)}
+                            </span>
+                            <button
+                              onClick={() => removeItem(idx)}
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                              title="Quitar"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                        {Number(item.install_price || 0) > 0 && (
+                          <label className="flex items-center gap-2 mt-1.5 pl-1 text-xs text-gray-500 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!!item.installation}
+                              onChange={() => toggleItemInstall(idx)}
+                              className="w-3.5 h-3.5 accent-brand"
+                            />
+                            Incluir instalación (+${Number(item.install_price).toFixed(2)}/unidad)
+                          </label>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 ml-3">
-                        <input
-                          type="number"
-                          min="1"
-                          value={item.qty}
-                          onChange={(e) => updateItemQty(idx, e.target.value)}
-                          className="w-16 px-2 py-1 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                        />
-                        <span className="font-semibold text-gray-900 w-20 text-right">
-                          ${(item.price * item.qty).toFixed(2)}
-                        </span>
-                        <button
-                          onClick={() => removeItem(idx)}
-                          className="text-gray-400 hover:text-red-600 transition-colors"
-                          title="Quitar"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
