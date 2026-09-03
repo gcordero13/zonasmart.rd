@@ -1,0 +1,49 @@
+import { Routes, Route } from 'react-router-dom'
+import StoreLayout from './layouts/StoreLayout'
+import AdminLayout from './layouts/AdminLayout'
+import RequireAuth from './components/RequireAuth'
+import Home from './pages/store/Home'
+import Shop from './pages/store/Shop'
+import ProductDetail from './pages/store/ProductDetail'
+import Cart from './pages/store/Cart'
+import Checkout from './pages/store/Checkout'
+import OrderConfirmation from './pages/store/OrderConfirmation'
+import Login from './pages/auth/Login'
+import Register from './pages/auth/Register'
+import Dashboard from './pages/admin/Dashboard'
+import AdminProducts from './pages/admin/AdminProducts'
+import AdminOrders from './pages/admin/AdminOrders'
+import AdminCustomers from './pages/admin/AdminCustomers'
+
+function App() {
+  return (
+    <Routes>
+      <Route element={<StoreLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/tienda" element={<Shop />} />
+        <Route path="/producto/:id" element={<ProductDetail />} />
+        <Route path="/carrito" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/confirmacion" element={<OrderConfirmation />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Register />} />
+      </Route>
+
+      <Route
+        path="/admin"
+        element={
+          <RequireAuth adminOnly>
+            <AdminLayout />
+          </RequireAuth>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="productos" element={<AdminProducts />} />
+        <Route path="pedidos" element={<AdminOrders />} />
+        <Route path="clientes" element={<AdminCustomers />} />
+      </Route>
+    </Routes>
+  )
+}
+
+export default App
