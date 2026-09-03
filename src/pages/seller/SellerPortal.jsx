@@ -17,7 +17,7 @@ export default function SellerPortal() {
       setLoading(true)
       setError(null)
       try {
-        const mySeller = await fetchSellerByUser(user.id)
+        const mySeller = await fetchSellerByUser(user.id, user.email)
         if (!mounted) return
         setSeller(mySeller)
         if (mySeller) {

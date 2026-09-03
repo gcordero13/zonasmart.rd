@@ -10,14 +10,35 @@ export const fetchSellers = async () => {
   return data
 }
 
-export const fetchSellerByUser = async (userId) => {
-  const { data, error } = await supabase
+export const fetchSellerByUser = async (userId, email) => {
+  const safeEmail = (email || '').trim().toLowerCase()
+  let { data, error } = await supabase
     .from('sellers')
     .select('*')
     .eq('seller_id', userId)
     .maybeSingle()
   if (error) throw error
-  return data
+  if (data) return data
+
+  if (safeEmail) {
+    const { data: byEmail, error: emailError } = await supabase
+      .from('sellers')
+      .select('*')
+      .ilike('email', safeEmail)
+      .maybeSingle()
+    if (emailError) throw emailError
+    if (byEmail) {
+      const { data: linked, error: linkError } = await supabase
+        .from('sellers')
+        .update({ seller_id: userId })
+        .eq('id', byEmail.id)
+        .select()
+        .single()
+      if (!linkError && linked) return linked
+      return byEmail
+    }
+  }
+  return null
 }
 
 export const createSeller = async ({ seller_id, name, email, commission_rate, referrer_code }) => {

@@ -54,7 +54,7 @@ export default function Cotizador() {
         let qs = []
         let slider = null
         if (user) {
-          slider = await fetchSellerByUser(user.id).catch(() => null)
+          slider = await fetchSellerByUser(user.id, user.email).catch(() => null)
           setMySeller(slider)
           qs = await fetchQuotations().catch(() => [])
         }
