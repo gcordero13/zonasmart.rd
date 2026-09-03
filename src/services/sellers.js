@@ -4,7 +4,7 @@ import { generateTrackingCode } from './orders'
 export const fetchSellers = async () => {
   const { data, error } = await supabase
     .from('sellers')
-    .select('*, profiles:seller_id (...)')
+    .select('*')
     .order('created_at', { ascending: false })
   if (error) throw error
   return data
@@ -68,7 +68,7 @@ export const suspendSeller = async (id) => {
 export const getSellerStats = async (sellerId) => {
   const { data, error } = await supabase
     .from('commissions')
-    .select('*, order:order_id (tracking_code, total)')
+    .select('*, orders(tracking_code, total)')
     .eq('seller_id', sellerId)
     .order('created_at', { ascending: false })
   if (error) throw error
@@ -109,7 +109,7 @@ export const markCommissionRejected = async (id) => {
 export const fetchAllCommissions = async () => {
   const { data, error } = await supabase
     .from('commissions')
-    .select('*, seller:seller_id (name, email), order:order_id (tracking_code)')
+    .select('*, sellers(name, email), orders(tracking_code)')
     .order('created_at', { ascending: false })
   if (error) throw error
   return data

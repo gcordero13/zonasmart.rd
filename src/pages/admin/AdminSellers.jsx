@@ -17,17 +17,20 @@ export default function AdminSellers() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('vendedores')
   const [errors, setErrors] = useState({})
+  const [loadError, setLoadError] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ email: '', name: '', commission_rate: 10 })
 
   const load = async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const [s, c] = await Promise.all([fetchSellers(), fetchAllCommissions()])
       setSellers(s)
       setCommissions(c)
     } catch (e) {
-      console.error(e)
+      console.error('Error cargando vendedores:', e)
+      setLoadError(e.message)
     } finally {
       setLoading(false)
     }
@@ -62,9 +65,18 @@ export default function AdminSellers() {
       })
       setShowForm(false)
       setForm({ email: '', name: '', commission_rate: 10 })
+      setErrors({})
       await load()
     } catch (err2) {
-      setErrors({ general: err2.message })
+      const msg = err2.message || 'No se pudo crear el vendedor.'
+      if (msg.toLowerCase().includes('does not exist') || msg.toLowerCase().includes('relation') || msg.toLowerCase().includes('not found')) {
+        setErrors({
+          general:
+            'Falta la tabla "sellers" en Supabase. Ejecuta el script supabase-migration-sellers.sql en el SQL Editor antes de crear vendedores.',
+        })
+      } else {
+        setErrors({ general: msg })
+      }
     }
   }
 
@@ -108,6 +120,23 @@ export default function AdminSellers() {
           </button>
         )}
       </div>
+
+      {loadError && (
+        <div className="mb-6 p-4 rounded-xl border border-amber-300 bg-amber-50 text-sm text-amber-900 animate-scale-in">
+          <p className="font-semibold mb-1 flex items-center gap-2">
+            <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            No se pudieron cargar los vendedores
+          </p>
+          <p>{loadError}</p>
+          <p className="mt-2 text-xs">
+            Si el error menciona que la tabla <code className="font-mono">sellers</code> o{' '}
+            <code className="font-mono">commissions</code> no existe, ejecuta el script{' '}
+            <code className="font-mono">supabase-migration-sellers.sql</code> en el SQL Editor de Supabase.
+          </p>
+        </div>
+      )}
 
       <div className="flex gap-2 mb-6 border-b border-gray-200">
         <button
@@ -272,8 +301,8 @@ export default function AdminSellers() {
                 <tbody className="divide-y divide-gray-100">
                   {commissions.map((c) => (
                     <tr key={c.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-900">{c.seller?.name || c.seller?.email || '—'}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-600">{c.order?.tracking_code || '—'}</td>
+                      <td className="px-4 py-3 text-gray-900">{c.sellers?.name || c.sellers?.email || '—'}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-gray-600">{c.orders?.tracking_code || '—'}</td>
                       <td className="px-4 py-3">${(c.order_total || 0).toFixed(2)}</td>
                       <td className="px-4 py-3 font-semibold text-brand-dark">${c.amount.toFixed(2)}</td>
                       <td className="px-4 py-3">{statusBadge(c.status)}</td>
