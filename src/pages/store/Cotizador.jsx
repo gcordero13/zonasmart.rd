@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useCart } from '../../context/CartContext'
 import { fetchProducts } from '../../services/products'
 import { fetchSellerByUser } from '../../services/sellers'
 import { uploadImage, getPublicUrl } from '../../services/storage'
@@ -22,6 +23,7 @@ const empty = {
 
 export default function Cotizador() {
   const { user } = useAuth()
+  const { items: cartItems } = useCart()
 
   const [products, setProducts] = useState([])
   const [quotes, setQuotes] = useState([])
@@ -29,8 +31,8 @@ export default function Cotizador() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [form, setForm] = useState(empty)
-  const [selectedProduct, setSelectedProduct] = useState('')
-  const [qty, setQty] = useState(1)
+  const [selectedIds, setSelectedIds] = useState([])
+  const [qtyMap, setQtyMap] = useState({})
   const [shipping, setShipping] = useState(0)
   const [discount, setDiscount] = useState(0)
   const [status, setStatus] = useState('pending')
@@ -72,28 +74,70 @@ export default function Cotizador() {
   )
   const total = Math.max(0, subtotal + Number(shipping || 0) - Number(discount || 0))
 
-  const addItem = () => {
-    const prod = products.find((p) => p.id === selectedProduct)
-    if (!prod) return
+  const toggleSelect = (id) => {
+    setSelectedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]))
+  }
+
+  const setProductQty = (id, q) => {
+    setQtyMap((m) => ({ ...m, [id]: Math.max(1, Number(q) || 1) }))
+  }
+
+  const addSelected = () => {
+    const chosen = products.filter((p) => selectedIds.includes(p.id))
+    if (chosen.length === 0) {
+      setError('Selecciona al menos un producto para agregar a la cotización.')
+      return
+    }
     setForm((f) => ({
       ...f,
       items: [
         ...f.items,
-        {
+        ...chosen.map((prod) => ({
           id: prod.id,
           name: prod.name,
           price: Number(prod.price),
-          qty: Number(qty || 1),
+          qty: Number(qtyMap[prod.id] || 1),
           image_url: prod.image_url || null,
-        },
+        })),
       ],
     }))
-    setSelectedProduct('')
-    setQty(1)
+    setSelectedIds([])
+    setQtyMap({})
+    setError(null)
+  }
+
+  const importFromCart = () => {
+    if (cartItems.length === 0) {
+      setError('Tu carrito está vacío. Agrega productos al carrito primero o selecciónalos de la lista.')
+      return
+    }
+    setForm((f) => ({
+      ...f,
+      items: [
+        ...f.items,
+        ...cartItems.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: Number(item.price),
+          qty: Number(item.quantity || 1),
+          image_url: item.image_url || null,
+        })),
+      ],
+    }))
+    setError(null)
   }
 
   const removeItem = (idx) => {
     setForm((f) => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))
+  }
+
+  const updateItemQty = (idx, q) => {
+    setForm((f) => ({
+      ...f,
+      items: f.items.map((item, i) =>
+        i === idx ? { ...item, qty: Math.max(1, Number(q) || 1) } : item
+      ),
+    }))
   }
 
   const handleCoverUpload = async (e) => {
@@ -153,6 +197,8 @@ export default function Cotizador() {
 
   const resetForm = () => {
     setForm(empty)
+    setSelectedIds([])
+    setQtyMap({})
     setShipping(0)
     setDiscount(0)
     setStatus('pending')
@@ -253,63 +299,106 @@ export default function Cotizador() {
               </div>
             </div>
 
-            {/* Agregar productos */}
+            {/* Seleccionar productos */}
             <div className="border-t border-gray-100 pt-4">
-              <p className="text-sm font-semibold text-gray-700 mb-2">Agregar productos</p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <select
-                  value={selectedProduct}
-                  onChange={(e) => setSelectedProduct(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand bg-white"
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-gray-700">Seleccionar productos</p>
+                <button
+                  type="button"
+                  onClick={importFromCart}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand/30 text-brand-dark text-xs font-semibold hover:bg-brand/10 transition"
                 >
-                  <option value="">Selecciona un producto...</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} — ${Number(p.price).toFixed(2)}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min="1"
-                    value={qty}
-                    onChange={(e) => setQty(e.target.value)}
-                    className="w-20 px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
-                  />
-                  <button
-                    onClick={addItem}
-                    disabled={!selectedProduct}
-                    className="px-4 py-2 rounded-md gradient-brand text-white text-sm font-semibold hover:brightness-110 disabled:opacity-40 transition"
-                  >
-                    Agregar
-                  </button>
-                </div>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2m0 0L7 13h11l2-8H5.4M7 13a2 2 0 100 4 2 2 0 000-4zm9 0a2 2 0 100 4 2 2 0 000-4z" />
+                  </svg>
+                  Importar del carrito ({cartItems.length})
+                </button>
               </div>
+
+              <div className="max-h-64 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
+                {products.map((p) => {
+                  const checked = selectedIds.includes(p.id)
+                  return (
+                    <label key={p.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleSelect(p.id)}
+                        className="w-4 h-4 accent-brand shrink-0"
+                      />
+                      {p.image_url && (
+                        <img src={p.image_url} alt="" className="w-10 h-10 rounded-md object-cover bg-gray-100 shrink-0" />
+                      )}
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm text-gray-800 truncate">{p.name}</span>
+                        <span className="text-xs text-gray-400">${Number(p.price).toFixed(2)}</span>
+                      </span>
+                      {checked && (
+                        <input
+                          type="number"
+                          min="1"
+                          value={qtyMap[p.id] || 1}
+                          onChange={(e) => setProductQty(p.id, e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-16 px-2 py-1 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                        />
+                      )}
+                    </label>
+                  )
+                })}
+                {products.length === 0 && (
+                  <p className="text-sm text-gray-400 py-6 text-center">No hay productos disponibles.</p>
+                )}
+              </div>
+
+              {selectedIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={addSelected}
+                  className="mt-3 w-full px-4 py-2.5 rounded-lg gradient-brand text-white text-sm font-semibold hover:brightness-110 transition shadow-md shadow-brand/20"
+                >
+                  Agregar {selectedIds.length} producto{selectedIds.length > 1 ? 's' : ''} a la cotización
+                </button>
+              )}
             </div>
 
             {/* Items actuales */}
             {form.items.length > 0 && (
-              <div className="space-y-2">
-                {form.items.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm">
-                    <span className="text-gray-800">
-                      {item.name} <span className="text-gray-400">× {item.qty}</span>
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-gray-900">${(item.price * item.qty).toFixed(2)}</span>
-                      <button
-                        onClick={() => removeItem(idx)}
-                        className="text-gray-400 hover:text-red-600 transition-colors"
-                        title="Quitar"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+              <div className="border-t border-gray-100 pt-4">
+                <p className="text-sm font-semibold text-gray-700 mb-2">
+                  Productos en la cotización ({form.items.length})
+                </p>
+                <div className="space-y-2">
+                  {form.items.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm">
+                      <div className="min-w-0">
+                        <span className="block text-gray-800 truncate">{item.name}</span>
+                        <span className="text-xs text-gray-400">${Number(item.price).toFixed(2)} c/u</span>
+                      </div>
+                      <div className="flex items-center gap-2 ml-3">
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.qty}
+                          onChange={(e) => updateItemQty(idx, e.target.value)}
+                          className="w-16 px-2 py-1 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                        />
+                        <span className="font-semibold text-gray-900 w-20 text-right">
+                          ${(item.price * item.qty).toFixed(2)}
+                        </span>
+                        <button
+                          onClick={() => removeItem(idx)}
+                          className="text-gray-400 hover:text-red-600 transition-colors"
+                          title="Quitar"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 

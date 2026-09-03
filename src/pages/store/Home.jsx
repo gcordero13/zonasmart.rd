@@ -276,7 +276,7 @@ export default function Home() {
             </motion.div>
           </motion.div>
 
-          {/* Visual de producto flotante */}
+          {/* Visual de portada con fotos reales de productos */}
           <motion.div
             initial={{ opacity: 0, y: 40, rotate: -2 }}
             animate={{ opacity: 1, y: 0, rotate: 0 }}
@@ -288,40 +288,64 @@ export default function Home() {
               transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
               className="relative"
             >
-              <div className="shine-hover relative overflow-hidden bg-gradient-to-br from-white/10 to-white/[0.02] border border-white/10 rounded-3xl p-8 backdrop-blur-sm shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand/10 to-transparent" />
-                <div className="relative flex items-center gap-4">
-                  <div className="gradient-brand text-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-brand-glow shrink-0">
-                    <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.72 11.06a2.96 2.96 0 00-3.09-4.08 7.5 7.5 0 10-6.85 11.16 2.96 2.96 0 003.09-4.08 1.5 1.5 0 112.5 0 2.96 2.96 0 003.09 4.08l-.74-3.08zM13.5 8.5h.01M8.5 15.5h.01" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-lg">Kit de Seguridad Inteligente</p>
-                    <p className="text-sm text-gray-400">Cámara + sensor · Envío en 24h</p>
-                  </div>
+              <div className="shine-hover relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl bg-white">
+                {/* Imagen principal de portada: primer producto destacado */}
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  {featured[0]?.image_url ? (
+                    <>
+                      <img
+                        src={featured[0].image_url}
+                        alt={featured[0].name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-5">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-brand-light">
+                          {featured[0].category || 'Destacado'}
+                        </span>
+                        <p className="text-white font-bold text-lg leading-tight mt-0.5">
+                          {featured[0].name}
+                        </p>
+                        <p className="text-white/80 text-sm mt-0.5">
+                          desde ${Number(featured[0].price).toFixed(2)}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand/20 to-brand-dark/30">
+                      <svg className="w-16 h-16 text-white/40" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0a6.5 6.5 0 10-9.2 0 6.5 6.5 0 009.2 0z" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
 
-                <div className="relative mt-6 space-y-3">
-                  {[
-                    ['Seguridad 24/7', 'bg-green-500/15 text-green-300 border-green-400/20'],
-                    ['Instalación incluida', 'bg-brand/15 text-brand-light border-brand/20'],
-                    ['Garantía de 1 año', 'bg-blue-500/15 text-blue-300 border-blue-400/20'],
-                  ].map(([label, cls], i) => (
-                    <motion.div
-                      key={label}
-                      initial={{ opacity: 0, x: 24 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.7 + i * 0.15, duration: 0.5 }}
-                      className={`flex items-center justify-between px-4 py-3 rounded-xl border ${cls} backdrop-blur`}
-                    >
-                      <span className="text-sm font-medium">{label}</span>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.4" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </motion.div>
-                  ))}
-                </div>
+                {/* Tira de miniaturas con los siguientes destacados */}
+                {featured.slice(1, 5).length > 0 && featured[0]?.image_url && (
+                  <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50">
+                    {featured.slice(1, 5).map((p) => (
+                      <div key={p.id} className="relative h-24 overflow-hidden rounded-xl group">
+                        {p.image_url ? (
+                          <>
+                            <img
+                              src={p.image_url}
+                              alt={p.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                            <span className="absolute bottom-1.5 left-2 right-2 text-[11px] text-white font-medium truncate">
+                              {p.name}
+                            </span>
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 text-xs">
+                            Sin imagen
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <motion.div
