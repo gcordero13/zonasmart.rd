@@ -33,11 +33,32 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50">
-      <div className="gradient-brand gradient-animated text-white text-center text-sm font-medium py-1.5 px-4">
-        Envíos a todo el país · Pago seguro · Ofertas de lanzamiento
+      <div className="hidden sm:block bg-gray-950 text-gray-300 text-xs border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
+          <span className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-brand" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Garantía en todos los productos
+            </span>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-brand" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+              </svg>
+              Soporte 24/7
+            </span>
+          </span>
+          <span className="flex items-center gap-1.5 text-gray-400">
+            <svg className="w-3.5 h-3.5 text-brand" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Envíos a todo el país
+          </span>
+        </div>
       </div>
 
-      <nav className="bg-gray-900 border-b border-gray-800">
+      <nav className="bg-gray-900 border-b border-gray-800 shadow-lg shadow-gray-950/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-6">

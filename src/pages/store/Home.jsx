@@ -89,6 +89,45 @@ export default function Home() {
     },
   ]
 
+  const servicePromises = [
+    {
+      title: 'Instalación profesional',
+      desc: 'Técnicos certificados instalan y configuran tu producto donde lo necesites.',
+      icon: (
+        <svg className="w-8 h-8 text-brand" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 3.66a3 3 0 014.32 0l1.4 1.4a3 3 0 010 4.24 3 3 0 010 4.24 3 3 0 010 4.24L13.31 16m-4.24-9.66a3 3 0 00-4.24 4.24l.7.7a2 2 0 01-1.41 3.4H3.5a2 2 0 00-1.41 3.4L4 20.6" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Soporte 24/7',
+      desc: 'Atención real todos los días para instalación, dudas y configuración de tu equipo.',
+      icon: (
+        <svg className="w-8 h-8 text-brand" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18.36 6.64A9 9 0 115.64 17.36 9 9 0 0118.36 6.64zM12 8a3 3 0 00-3 3h2a1 1 0 012 0c0 1-.5 1.5-1 2.5V15h2v-.5c1-.5 1.5-1.5 1.5-2.5A3 3 0 0012 8zm-1 8h2v2h-2z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Garantía respaldada',
+      desc: 'Cobertura real en cada compra. Si algo falla, lo resolvemos sin complicaciones.',
+      icon: (
+        <svg className="w-8 h-8 text-brand" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Envío con seguimiento',
+      desc: 'Entregas a todo el país y rastreo de tu pedido en tiempo real, paso a paso.',
+      icon: (
+        <svg className="w-8 h-8 text-brand" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6H3v12h2M12 6h5l4 4v8h-2M9 8h5a2 2 0 012 2v6H6M9 19a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm9 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+        </svg>
+      ),
+    },
+  ]
+
   const hero = {
     title: settings.hero_title || 'Tecnología que hace tu hogar inteligente',
     subtitle:
@@ -111,7 +150,7 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 md:py-32 grid md:grid-cols-2 gap-12 items-center">
           <div className="animate-fade-in-up">
             <span className="inline-block animate-soft-pulse bg-brand/20 text-brand-light border border-brand/30 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-              Envíos a todo el país
+              Instalación y soporte profesional incluidos
             </span>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-white mb-6">
               {titlePrefix}
@@ -137,6 +176,21 @@ export default function Home() {
                 Seguir mi pedido
               </Link>
             </div>
+
+            <div className="mt-10 grid grid-cols-3 gap-6 border-t border-white/10 pt-6 max-w-md">
+              <div>
+                <p className="text-2xl font-bold text-white">Garantía</p>
+                <p className="text-xs text-gray-400 mt-0.5">en cada compra</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">24/7</p>
+                <p className="text-xs text-gray-400 mt-0.5">soporte real</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">100%</p>
+                <p className="text-xs text-gray-400 mt-0.5">pago seguro</p>
+              </div>
+            </div>
           </div>
 
           <div className="hidden md:block animate-float-lively">
@@ -158,21 +212,23 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {trustBars.map((item, i) => (
-            <Reveal key={item.title} delay={i * 90} className="flex items-start gap-3">
-              <span className="gradient-brand text-white w-10 h-10 rounded-lg flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {item.svg}
-                </svg>
-              </span>
-              <div>
-                <p className="font-semibold text-gray-900">{item.title}</p>
-                <p className="text-sm text-gray-500">{item.desc}</p>
-              </div>
-            </Reveal>
-          ))}
+      <section className="bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {trustBars.map((item, i) => (
+              <Reveal key={item.title} delay={i * 90} className="trust-card rounded-xl p-5 flex items-start gap-3">
+                <span className="gradient-brand text-white w-11 h-11 rounded-lg flex items-center justify-center shrink-0 shadow-md shadow-brand/20">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {item.svg}
+                  </svg>
+                </span>
+                <div>
+                  <p className="font-semibold text-gray-900">{item.title}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">{item.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -216,6 +272,58 @@ export default function Home() {
       </section>
 
       <ServicesSection />
+
+      <section className="bg-gradient-to-b from-gray-50 to-white py-16 sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-12 max-w-2xl mx-auto">
+            <span className="inline-block gradient-brand text-white text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
+              Nuestro compromiso
+            </span>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+              No solo vendemos. Te acompañamos.
+            </h2>
+            <p className="text-gray-500">
+              Un equipo que instala, configura y te da soporte de verdad, para que tu inversión
+              funcione desde el primer día.
+            </p>
+          </Reveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {servicePromises.map((item, i) => (
+              <Reveal key={item.title} delay={i * 90} className="trust-card rounded-2xl p-6">
+                <div className="mb-4">{item.icon}</div>
+                <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal className="mt-12 bg-white rounded-2xl p-6 md:p-8 border border-gray-100 shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="gradient-brand text-white w-12 h-12 rounded-xl flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.69l1.1 3.31a1 1 0 01-.59 1.25l-1.46.58a11.04 11.04 0 005.88 5.88l.58-1.46a1 1 0 011.25-.59l3.31 1.1a1 1 0 01.69.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">¿Necesitas ayuda para decidir?</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Escríbenos y un asesor te orienta en la elección, instalación y configuración.
+                </p>
+              </div>
+            </div>
+            <a
+              href={settings.whatsapp ? `https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}` : '#'}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl gradient-brand text-white font-semibold hover:brightness-110 transition whitespace-nowrap shadow-md shadow-brand/20"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              Hablar con un asesor
+            </a>
+          </Reveal>
+        </div>
+      </section>
 
       <section className="gradient-brand py-14">
         <Reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center" variant="reveal-zoom">

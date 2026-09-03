@@ -30,28 +30,32 @@ export default function ServicesSection() {
   if (loading || services.length === 0) return null
 
   return (
-    <section className="bg-white border-t border-gray-100 py-16">
+    <section className="bg-white border-y border-gray-100 py-16 sm:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center mb-12">
+          <span className="inline-block gradient-brand text-white text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
+            Servicios
+          </span>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Nuestros servicios</h2>
-          <p className="text-gray-500 mt-2">
-            Más que productos: soluciones completas para tu hogar y tu negocio.
+          <p className="text-gray-500 mt-2 max-w-xl mx-auto">
+            Más que productos: soluciones completas de instalación, soporte y garantía para tu hogar
+            y tu negocio.
           </p>
         </Reveal>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {services.map((s, i) => (
             <Reveal key={s.id} delay={(i % 4) * 80} variant="reveal-zoom">
-              <div className="group p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all shine-hover">
-                <div className="w-14 h-14 gradient-brand text-white rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <div className="group trust-card rounded-2xl p-6 h-full flex flex-col">
+                <div className="w-14 h-14 gradient-brand text-white rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md shadow-brand/20">
                   <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d={iconPath(s.icon)} />
                   </svg>
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-1">{s.title}</h3>
-                <p className="text-sm text-gray-500 mb-3">{s.description}</p>
+                <p className="text-sm text-gray-500 mb-3 flex-1 leading-relaxed">{s.description}</p>
                 {Number(s.price) > 0 && (
-                  <p className="text-brand-dark font-bold">${Number(s.price).toFixed(2)}</p>
+                  <p className="text-brand-dark font-bold text-lg">${Number(s.price).toFixed(2)}</p>
                 )}
               </div>
             </Reveal>
