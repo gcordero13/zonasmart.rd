@@ -37,6 +37,16 @@ export const reverseGeocode = async (lat, lng) => {
   }
 }
 
+export const parseGoogleMapsUrl = (url) => {
+  if (!url || typeof url !== 'string') return null
+  const match = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+  if (!match) return null
+  const lat = Number(match[1])
+  const lng = Number(match[2])
+  if (!isFinite(lat) || !isFinite(lng)) return null
+  return { lat, lng }
+}
+
 export const estimateLocation = () =>
   new Promise((resolve, reject) => {
     if (!navigator.geolocation) {

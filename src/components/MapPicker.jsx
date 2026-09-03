@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { searchLocation, reverseGeocode } from '../services/geo'
+import { searchLocation, reverseGeocode, parseGoogleMapsUrl } from '../services/geo'
 
 const pinIcon = L.divIcon({
   html: `<svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#e11d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3" fill="#fff"/></svg>`,
@@ -23,8 +23,10 @@ function ClickHandler({ onPlace }) {
 
 export default function MapPicker({ value, onChange }) {
   const [query, setQuery] = useState('')
+  const [mapsLink, setMapsLink] = useState('')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
+  const [gmError, setGmError] = useState('')
   const [center, setCenter] = useState(
     value ? [value.lat, value.lng] : [18.4861, -69.9312] // Santo Domingo por defecto
   )
@@ -56,6 +58,17 @@ export default function MapPicker({ value, onChange }) {
     } finally {
       setSearching(false)
     }
+  }
+
+  const applyMapsLink = async () => {
+    setGmError('')
+    const coords = parseGoogleMapsUrl(mapsLink)
+    if (!coords) {
+      setGmError('No se pudo leer la ubicación. Pega el enlace completo del mapa (debe contener las coordenadas, ejemplo: @18.59,-68.41).')
+      return
+    }
+    await applyLocation(coords.lat, coords.lng)
+    setMapsLink('')
   }
 
   return (
@@ -101,6 +114,28 @@ export default function MapPicker({ value, onChange }) {
         )}
       </div>
 
+      {/* Pegar link de Google Maps */}
+      <div className="flex gap-2 items-start">
+        <div className="flex-1">
+          <input
+            type="text"
+            value={mapsLink}
+            onChange={(e) => setMapsLink(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), applyMapsLink())}
+            placeholder="O pega el enlace de Google Maps (ej. https://www.google.com/maps/@18.59,-68.41)"
+            className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand"
+          />
+          {gmError && <p className="mt-1 text-xs text-red-600">{gmError}</p>}
+        </div>
+        <button
+          type="button"
+          onClick={applyMapsLink}
+          className="px-4 py-2 rounded-md bg-brand text-white text-sm font-medium hover:bg-brand-dark transition-colors"
+        >
+          Usar
+        </button>
+      </div>
+
       {/* Mapa */}
       <div className="rounded-xl overflow-hidden border border-gray-200 h-64">
         <MapContainer
@@ -119,7 +154,18 @@ export default function MapPicker({ value, onChange }) {
             }}
           />
           {value && (
-            <Marker position={[value.lat, value.lng]} icon={pinIcon} ref={markerRef} draggable>
+            <Marker
+              position={[value.lat, value.lng]}
+              icon={pinIcon}
+              ref={markerRef}
+              draggable
+              eventHandlers={{
+                dragend: (e) => {
+                  const pos = e.target.getLatLng()
+                  applyLocation(pos.lat, pos.lng)
+                },
+              }}
+            >
               <></>
             </Marker>
           )}
