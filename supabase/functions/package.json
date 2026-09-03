@@ -1,0 +1,13 @@
+{
+  "name": "zonasmart-functions",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "@supabase/functions-js": "^2.4.1",
+    "typescript": "^5.5.4"
+  }
+}

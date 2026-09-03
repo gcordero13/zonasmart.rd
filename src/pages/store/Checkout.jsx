@@ -6,10 +6,13 @@ import { createOrder, generateTrackingCode } from '../../services/orders'
 import { resolveSellerByCode, recordCommission } from '../../services/sellers'
 import { decrementProductStock } from '../../services/products'
 import { estimateLocation } from '../../services/geo'
+import { sendOrderNotification } from '../../services/emails'
+import { useStore } from '../../context/StoreContext'
 
 export default function Checkout() {
   const { items, totalPrice, totalItems, clearCart } = useCart()
   const { user } = useAuth()
+  const { settings } = useStore()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
@@ -112,6 +115,19 @@ export default function Checkout() {
             amount: Number(amount.toFixed(2)),
             order_total: order.total,
           }).catch(() => null)
+
+          if (seller.email) {
+            sendOrderNotification({
+              to: seller.email,
+              customerName: order.customer_name,
+              trackingCode: order.tracking_code,
+              total: order.total,
+              shipping: order.shipping,
+              status: order.status,
+              items: order.items,
+              storeName: settings.store_name,
+            }).catch(() => null)
+          }
         }
       }
 

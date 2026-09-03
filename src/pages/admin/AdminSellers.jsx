@@ -10,8 +10,11 @@ import {
   markCommissionRejected,
   generateReferrerCode,
 } from '../../services/sellers'
+import { sendSellerWelcome } from '../../services/emails'
+import { useStore } from '../../context/StoreContext'
 
 export default function AdminSellers() {
+  const { settings } = useStore()
   const [sellers, setSellers] = useState([])
   const [commissions, setCommissions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -57,12 +60,21 @@ export default function AdminSellers() {
     setErrors(err)
     if (Object.keys(err).length) return
     try {
+      const code = generateReferrerCode()
       await createSeller({
         name: form.name,
         email: form.email,
         commission_rate: Number(form.commission_rate),
-        referrer_code: generateReferrerCode(),
+        referrer_code: code,
       })
+      if (form.email) {
+        sendSellerWelcome({
+          to: form.email,
+          name: form.name,
+          referrerCode: code,
+          storeName: settings.store_name,
+        }).catch(() => null)
+      }
       setShowForm(false)
       setForm({ email: '', name: '', commission_rate: 10 })
       setErrors({})
