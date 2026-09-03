@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { createOrder, generateTrackingCode } from '../../services/orders'
@@ -125,7 +126,13 @@ export default function Checkout() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="max-w-7xl mx-auto px-4 py-20 text-center"
+      >
         <h1 className="text-2xl font-bold text-gray-900 mb-4">No hay productos para pagar</h1>
         <Link
           to="/tienda"
@@ -133,7 +140,7 @@ export default function Checkout() {
         >
           Ir a la tienda
         </Link>
-      </div>
+      </motion.div>
     )
   }
 
@@ -142,9 +149,24 @@ export default function Checkout() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Finalizar compra</h1>
+      <motion.h1
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="text-2xl font-bold text-gray-900 mb-8"
+      >
+        Finalizar compra
+      </motion.h1>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+      <motion.form
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '0px 0px -40px 0px' }}
+        transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
+        onSubmit={handleSubmit}
+        className="bg-white rounded-lg shadow p-6"
+      >
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
             {error}
@@ -256,7 +278,7 @@ export default function Checkout() {
           Nota: la pasarela de pagos (Stripe/PayPal) se integra en el siguiente paso. Por ahora se
           registra el pedido como &quot;pendiente de pago&quot;.
         </p>
-      </form>
+      </motion.form>
     </div>
   )
 }

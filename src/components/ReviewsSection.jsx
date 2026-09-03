@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { fetchReviews, createReview } from '../services/reviews'
+import Reveal from './Reveal'
 
 export default function ReviewsSection() {
   const { user } = useAuth()
@@ -45,7 +46,9 @@ export default function ReviewsSection() {
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-16">
-      <h2 className="text-2xl font-bold text-gray-900 mb-8">Opiniones de nuestros clientes</h2>
+      <Reveal>
+        <h2 className="text-2xl font-bold text-gray-900 mb-8">Opiniones de nuestros clientes</h2>
+      </Reveal>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
@@ -61,23 +64,26 @@ export default function ReviewsSection() {
 
       {!loading && reviews.length > 0 && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-          {reviews.map((review) => (
-            <div key={review.id} className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-gray-900">{review.name}</p>
-                <span className="text-brand">{"★".repeat(review.rating)}</span>
+          {reviews.map((review, i) => (
+            <Reveal key={review.id} delay={i * 70}>
+              <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-semibold text-gray-900">{review.name}</p>
+                  <span className="text-brand">{"★".repeat(review.rating)}</span>
+                </div>
+                <p className="text-gray-600 text-sm">{review.comment}</p>
+                <p className="text-xs text-gray-400 mt-3">
+                  {new Date(review.created_at).toLocaleDateString()}
+                </p>
               </div>
-              <p className="text-gray-600 text-sm">{review.comment}</p>
-              <p className="text-xs text-gray-400 mt-3">
-                {new Date(review.created_at).toLocaleDateString()}
-              </p>
-            </div>
+            </Reveal>
           ))}
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="font-bold text-gray-900 mb-4">Escribe tu reseña</h3>
+      <Reveal>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="font-bold text-gray-900 mb-4">Escribe tu reseña</h3>
         <form onSubmit={handleSubmit}>
           <div className="mb-4 flex items-center gap-2">
             <span className="text-sm text-gray-600 mr-2">Calificación:</span>
@@ -108,7 +114,8 @@ export default function ReviewsSection() {
             {saving ? 'Enviando...' : 'Publicar reseña'}
           </button>
         </form>
-      </div>
+        </div>
+      </Reveal>
     </section>
   )
 }

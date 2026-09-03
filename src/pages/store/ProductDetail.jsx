@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { fetchProductById } from '../../services/products'
 import { useCart } from '../../context/CartContext'
 
@@ -46,7 +47,13 @@ export default function ProductDetail() {
       </nav>
 
       <div className="grid md:grid-cols-2 gap-8">
-        <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
+          className="aspect-square bg-gray-200 rounded-lg overflow-hidden"
+        >
           {product.image_url ? (
             <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
           ) : (
@@ -54,9 +61,14 @@ export default function ProductDetail() {
               Sin imagen
             </div>
           )}
-        </div>
+        </motion.div>
 
-        <div>
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
+        >
           <p className="text-sm text-brand font-semibold uppercase mb-2">
             {product.category}
           </p>
@@ -125,7 +137,7 @@ export default function ProductDetail() {
           >
             {product.stock === 0 ? 'Agotado' : 'Agregar al carrito'}
           </button>
-        </div>
+        </motion.div>
       </div>
     </div>
   )

@@ -1,12 +1,20 @@
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useCart } from '../../context/CartContext'
+import Reveal from '../../components/Reveal'
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, totalPrice, totalItems, clearCart } = useCart()
 
   if (items.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="max-w-7xl mx-auto px-4 py-20 text-center"
+      >
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Tu carrito está vacío</h1>
         <p className="text-gray-500 mb-8">Agrega productos para comenzar a comprar.</p>
         <Link
@@ -15,21 +23,27 @@ export default function Cart() {
         >
           Ir a la tienda
         </Link>
-      </div>
+      </motion.div>
     )
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">
-        Carrito de compras ({totalItems} items)
-      </h1>
+      <Reveal>
+        <h1 className="text-2xl font-bold text-gray-900 mb-8">
+          Carrito de compras ({totalItems} items)
+        </h1>
+      </Reveal>
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
-          {items.map((item) => (
-            <div
+          {items.map((item, i) => (
+            <motion.div
               key={item.id}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: (i % 4) * 0.06, ease: [0.21, 0.47, 0.32, 0.98] }}
               className="bg-white rounded-lg shadow p-4 flex gap-4 items-center"
             >
               <div className="w-20 h-20 bg-gray-200 rounded overflow-hidden shrink-0">
@@ -78,40 +92,43 @@ export default function Cart() {
                   Eliminar
                 </button>
               </div>
-            </div>
+            </motion.div>
           ))}
+          {items.length > 0 && (
+            <div className="flex justify-end">
+              <button
+                onClick={clearCart}
+                className="px-4 py-2 text-sm text-red-600 hover:text-red-700"
+              >
+                Vaciar carrito
+              </button>
+            </div>
+          )}
+        </div>
 
-          <div className="flex justify-end">
-            <button
-              onClick={clearCart}
-              className="px-4 py-2 text-sm text-red-600 hover:text-red-700"
+        <Reveal delay={150} className="h-fit">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Resumen</h2>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-600">Subtotal ({totalItems} items)</span>
+              <span className="font-medium">${totalPrice.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-600">Envío</span>
+              <span className="font-medium">Calculado al checkout</span>
+            </div>
+            <div className="border-t border-gray-200 mt-4 pt-4 flex justify-between mb-6">
+              <span className="font-bold text-gray-900">Total</span>
+              <span className="font-bold text-gray-900">${totalPrice.toFixed(2)}</span>
+            </div>
+            <Link
+              to="/checkout"
+              className="block w-full text-center px-6 py-3 rounded-lg bg-brand text-white font-semibold hover:bg-brand-dark transition-colors"
             >
-              Vaciar carrito
-            </button>
+              Proceder al pago
+            </Link>
           </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6 h-fit">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Resumen</h2>
-          <div className="flex justify-between mb-2">
-            <span className="text-gray-600">Subtotal ({totalItems} items)</span>
-            <span className="font-medium">${totalPrice.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between mb-2">
-            <span className="text-gray-600">Envío</span>
-            <span className="font-medium">Calculado al checkout</span>
-          </div>
-          <div className="border-t border-gray-200 mt-4 pt-4 flex justify-between mb-6">
-            <span className="font-bold text-gray-900">Total</span>
-            <span className="font-bold text-gray-900">${totalPrice.toFixed(2)}</span>
-          </div>
-          <Link
-            to="/checkout"
-            className="block w-full text-center px-6 py-3 rounded-lg bg-brand text-white font-semibold hover:bg-brand-dark transition-colors"
-          >
-            Proceder al pago
-          </Link>
-        </div>
+        </Reveal>
       </div>
     </div>
   )
