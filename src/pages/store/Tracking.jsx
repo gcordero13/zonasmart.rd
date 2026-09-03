@@ -1,9 +1,81 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { trackOrderByCode } from '../../services/orders'
+import { useAuth } from '../../context/AuthContext'
+import { trackOrderByCode, fetchOrdersByUser } from '../../services/orders'
 import TrackingStatus from '../../components/TrackingStatus'
+import OrderItems from '../../components/OrderItems'
 
 export default function Tracking() {
+  const { user } = useAuth()
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-10">
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">Seguimiento de pedido</h1>
+      {user ? <LoggedOrders user={user} /> : <GuestTracking />}
+    </div>
+  )
+}
+
+function LoggedOrders({ user }) {
+  const [orders, setOrders] = useState([])
+  const [loadingOrders, setLoadingOrders] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    setLoadingOrders(true)
+    fetchOrdersByUser(user.id)
+      .then(setOrders)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoadingOrders(false))
+  }, [user])
+
+  return (
+    <>
+      <p className="text-gray-600 mb-6">
+        Revisa el estado de tus pedidos directamente, sin necesidad de código.
+      </p>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
+      {loadingOrders && <p className="text-gray-500">Cargando tus pedidos...</p>}
+
+      {!loadingOrders && orders.length === 0 && (
+        <div className="bg-white rounded-lg shadow p-8 text-center">
+          <p className="text-gray-600 mb-4">Aún no tienes pedidos.</p>
+          <Link
+            to="/tienda"
+            className="inline-block px-6 py-3 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors"
+          >
+            Comprar ahora
+          </Link>
+        </div>
+      )}
+
+      {!loadingOrders && orders.length > 0 && (
+        <div className="space-y-4">
+          {orders.map((order) => (
+            <OrderCard key={order.id} order={order} />
+          ))}
+        </div>
+      )}
+
+      <div className="text-center mt-8">
+        <p className="text-sm text-gray-600">
+          ¿Quieres seguir un pedido por código?{' '}
+          <Link to="/login" className="text-amber-600 hover:text-amber-700 font-medium">
+            Cierra tu sesión para usar el formulario
+          </Link>
+        </p>
+      </div>
+    </>
+  )
+}
+
+function GuestTracking() {
   const [trackingCode, setTrackingCode] = useState('')
   const [email, setEmail] = useState('')
   const [order, setOrder] = useState(null)
@@ -30,8 +102,7 @@ export default function Tracking() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Seguimiento de pedido</h1>
+    <>
       <p className="text-gray-600 mb-8">
         Ingresa tu código de seguimiento (formato ZS-XXXXXXXX) y el email con el que compraste.
       </p>
@@ -78,41 +149,7 @@ export default function Tracking() {
         </div>
       )}
 
-      {order && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm text-gray-500">Código</p>
-              <p className="font-bold text-gray-900 tracking-wider">{order.tracking_code}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Total</p>
-              <p className="font-bold text-gray-900">${Number(order.total).toFixed(2)}</p>
-            </div>
-          </div>
-
-          <TrackingStatus status={order.status} />
-
-          <div className="mt-6 border-t border-gray-100 pt-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Productos</h3>
-            <ul className="divide-y divide-gray-100">
-              {(order.items || []).map((item, i) => (
-                <li key={i} className="py-2 flex justify-between text-sm">
-                  <span className="text-gray-700">
-                    {item.name} <span className="text-gray-400">× {item.quantity}</span>
-                  </span>
-                  <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <p className="mt-4 text-sm text-gray-500">
-            Última actualización:{' '}
-            {order.updated_at ? new Date(order.updated_at).toLocaleString() : '—'}
-          </p>
-        </div>
-      )}
+      {order && <OrderCard order={order} />}
 
       <div className="text-center mt-8">
         <p className="text-sm text-gray-600">
@@ -122,6 +159,32 @@ export default function Tracking() {
           </Link>
         </p>
       </div>
+    </>
+  )
+}
+
+function OrderCard({ order }) {
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-sm text-gray-500">Código</p>
+          <p className="font-bold text-gray-900 tracking-wider">{order.tracking_code}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-gray-500">Total</p>
+          <p className="font-bold text-gray-900">${Number(order.total).toFixed(2)}</p>
+        </div>
+      </div>
+
+      <TrackingStatus status={order.status} />
+
+      <OrderItems items={order.items} />
+
+      <p className="mt-4 text-sm text-gray-500">
+        Última actualización:{' '}
+        {order.updated_at ? new Date(order.updated_at).toLocaleString() : '—'}
+      </p>
     </div>
   )
 }

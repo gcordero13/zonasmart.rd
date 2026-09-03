@@ -8,6 +8,7 @@ const emptyForm = {
   price: '',
   stock: '',
   category: '',
+  delivery_days: '',
 }
 
 export default function AdminProducts() {
@@ -52,6 +53,7 @@ export default function AdminProducts() {
         price: Number(form.price),
         stock: Number(form.stock),
         category: form.category,
+        delivery_days: form.delivery_days ? Number(form.delivery_days) : null,
       }
 
       if (imageFile) {
@@ -83,6 +85,7 @@ export default function AdminProducts() {
       price: product.price,
       stock: product.stock,
       category: product.category,
+      delivery_days: product.delivery_days ?? '',
     })
     setShowForm(true)
   }
@@ -169,6 +172,20 @@ export default function AdminProducts() {
                 onChange={handleChange}
                 required
                 min="0"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tiempo de entrega (días)
+              </label>
+              <input
+                type="number"
+                name="delivery_days"
+                value={form.delivery_days}
+                onChange={handleChange}
+                min="0"
+                placeholder="ej: 3"
                 className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>

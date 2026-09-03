@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { fetchOrdersByUser } from '../../services/orders'
 import TrackingStatus from '../../components/TrackingStatus'
+import OrderItems from '../../components/OrderItems'
 
 export default function MyOrders() {
   const { user, loading } = useAuth()
@@ -74,19 +75,7 @@ export default function MyOrders() {
 
               <TrackingStatus status={order.status} />
 
-              <div className="mt-4 border-t border-gray-100 pt-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Productos</h3>
-                <ul className="divide-y divide-gray-100">
-                  {(order.items || []).map((item, i) => (
-                    <li key={i} className="py-2 flex justify-between text-sm">
-                      <span className="text-gray-700">
-                        {item.name} <span className="text-gray-400">× {item.quantity}</span>
-                      </span>
-                      <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <OrderItems items={order.items} />
             </div>
           ))}
         </div>
